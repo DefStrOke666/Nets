@@ -6,10 +6,12 @@
 #include <netdb.h>
 
 #include "utils.h"
-#include "exceptions.h"
 
 class IPV4 {
 private:
+    int port = 8888;
+    int bufSize = 32;
+
     FriendList fl{};
     std::string myName;
     std::string addr;
@@ -65,12 +67,12 @@ public:
         fd[0].fd = inSock;
         fd[0].events = POLLIN;
 
-        char buf[bufsize];
-        char hostname[NI_MAXHOST];
+        char buf[bufSize];
+        char hostname[INET_ADDRSTRLEN];
 
         struct sockaddr_in someFriend{};
         int len = sizeof(someFriend);
-        
+
         fl.setName(myName);
 
         while (true) {
@@ -85,7 +87,7 @@ public:
                 throw multicastException("poll");
             }
             if (ret != 0) {
-                long read = recvfrom(inSock, &buf, bufsize, MSG_WAITALL, (sockaddr *) &someFriend, (socklen_t *) &len);
+                long read = recvfrom(inSock, &buf, bufSize, MSG_WAITALL, (sockaddr *) &someFriend, (socklen_t *) &len);
                 if (read < 0) {
                     throw multicastException("recvfrom");
                 }
@@ -96,9 +98,7 @@ public:
                     continue;
                 }
 
-                if (getnameinfo((sockaddr *) &someFriend, len, hostname, NI_MAXHOST, nullptr, 0, NI_NUMERICHOST) != 0) {
-                    throw multicastException("getnameinfo");
-                }
+                getnameinfo((sockaddr *) &someFriend, len, hostname, INET_ADDRSTRLEN, nullptr, 0, NI_NUMERICHOST);
 
                 fl.addFriend(hostname, friendName);
             }

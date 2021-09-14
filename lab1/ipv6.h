@@ -5,10 +5,12 @@
 #include <net/if.h>
 
 #include "utils.h"
-#include "exceptions.h"
 
 class IPV6 {
 private:
+    int port = 9999;
+    int bufSize = 32;
+
     FriendList fl{};
     std::string myName;
     std::string addr;
@@ -63,7 +65,7 @@ public:
         fd[0].fd = inSock;
         fd[0].events = POLLIN;
 
-        char buf[bufsize];
+        char buf[bufSize];
         char hostname[INET6_ADDRSTRLEN];
 
         struct sockaddr_in6 someFriend{};
@@ -83,7 +85,7 @@ public:
                 throw multicastException("poll");
             }
             if (ret != 0) {
-                long read = recvfrom(inSock, &buf, bufsize, MSG_WAITALL, (sockaddr *) &someFriend, (socklen_t *) &len);
+                long read = recvfrom(inSock, &buf, bufSize, MSG_WAITALL, (sockaddr *) &someFriend, (socklen_t *) &len);
                 if (read < 0) {
                     throw multicastException("recvfrom");
                 }

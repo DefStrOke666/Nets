@@ -4,12 +4,15 @@
 #include <fstream>
 #include <map>
 #include <utility>
-
-static int port = 9999;
-static int bufsize = 256;
+#include <iostream>
+#include <algorithm>
+#include "exceptions.h"
 
 std::string generateName() {
-    std::ifstream names("../names.txt");
+    std::ifstream names("./names.txt");
+    if (!names.is_open()) {
+        throw multicastException("cannot open file with names");
+    }
     long lineCount = std::count(std::istreambuf_iterator<char>(names), std::istreambuf_iterator<char>(), '\n');
     names.seekg(0);
 
@@ -40,14 +43,14 @@ private:
 
 public:
 
-    void setName(std::string name){
+    void setName(std::string name) {
         myName = std::move(name);
     }
 
     void addFriend(const std::string &addr, const std::string &name) {
         if (friends.find(name) != friends.end()) {
             friends.find(name)->second.lastSeen = time(nullptr);
-        }else {
+        } else {
             Friend fr{
                     time(nullptr),
                     addr,
@@ -71,10 +74,9 @@ public:
         printf("========================================================\n");
 
         for (const auto &fr: friends) {
-            char buf[100];
+            char buf[32];
             const auto time = localtime(&fr.second.lastSeen);
             strftime(buf, sizeof(buf), "%H:%M:%S", time);
-            std::string timeStr(buf);
             printf("%-15s ||%-24s ||%-15s\n", fr.first.c_str(), fr.second.addr.c_str(), buf);
         }
     }
