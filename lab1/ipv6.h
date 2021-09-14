@@ -3,7 +3,6 @@
 #include <sys/poll.h>
 #include <sys/socket.h>
 #include <net/if.h>
-#include <unistd.h>
 
 #include "utils.h"
 #include "exceptions.h"
@@ -18,7 +17,7 @@ private:
 
     void initSockets() {
         int optVal = 1;
-        if ((inSock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
+        if ((inSock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
             throw multicastException("input socket");
         }
 
@@ -26,27 +25,22 @@ private:
             throw multicastException("input: setsockopt: SO_REUSEADDR");
         }
 
-        int hops = 255;
-        if (setsockopt(inSock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &hops, sizeof(hops)) != 0) {
-            throw multicastException("input: setsockopt: IPV6_MULTICAST_HOPS");
-        }
-
-        struct sockaddr_in6 server_addr{};
-        server_addr.sin6_family = AF_INET6;
-        server_addr.sin6_port = htons(port);
-        server_addr.sin6_addr = in6addr_any;
-        if (bind(inSock, (const struct sockaddr *) &server_addr, sizeof(server_addr)) != 0) {
+        struct sockaddr_in6 sockAddr{};
+        sockAddr.sin6_family = AF_INET6;
+        sockAddr.sin6_port = htons(port);
+        sockAddr.sin6_addr = in6addr_any;
+        if (bind(inSock, (const struct sockaddr *) &sockAddr, sizeof(sockAddr)) != 0) {
             throw multicastException("bind");
         }
 
         struct ipv6_mreq group{};
-        group.ipv6mr_interface = if_nametoindex("eth0");
+        group.ipv6mr_interface = 0;
         inet_pton(AF_INET6, addr.c_str(), &group.ipv6mr_multiaddr);
-        if (setsockopt(inSock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &group, sizeof group) != 0) {
+        if (setsockopt(inSock, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &group, sizeof group) != 0) {
             throw multicastException("input: setsockopt: IPV6_JOIN_GROUP");
         }
 
-        if ((outSock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
+        if ((outSock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
             throw multicastException("output socket");
         }
     }
@@ -60,7 +54,7 @@ public:
     void run() {
         initSockets();
 
-        bcAddr.sin6_family = AF_INET;
+        bcAddr.sin6_family = AF_INET6;
         inet_pton(AF_INET6, addr.c_str(), &bcAddr.sin6_addr);
         bcAddr.sin6_port = htons(port);
 
@@ -84,8 +78,7 @@ public:
 
             fl.removeExpired();
 
-            sleep(1);
-            int ret = poll(fd, fdsCount, 2000);
+            int ret = poll(fd, fdsCount, 500);
             if (ret < 0) {
                 throw multicastException("poll");
             }
@@ -103,7 +96,7 @@ public:
 
                 inet_ntop(AF_INET6, &(someFriend.sin6_addr), hostname, INET6_ADDRSTRLEN);
 
-                fl.add(hostname, friendName);
+                fl.addFriend(hostname, friendName);
             }
             fl.showFriendList();
         }

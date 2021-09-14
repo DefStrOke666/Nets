@@ -17,6 +17,7 @@ int main(int argc, char *argv[]) {
     if (inet_pton(AF_INET, argv[1], buf) == 1) {
         IPV4 ipv4(argv[1], myName);
         try {
+            std::cout << "Waiting for connections" << std::endl;
             ipv4.run();
         } catch (multicastException &e) {
             std::cerr << "Exception: " << e.what() << ": " << std::strerror(errno) << std::endl;
@@ -25,6 +26,7 @@ int main(int argc, char *argv[]) {
     } else if (inet_pton(AF_INET6, argv[1], buf) == 1) {
         IPV6 ipv6(argv[1], myName);
         try {
+            std::cout << "Waiting for connections" << std::endl;
             ipv6.run();
         } catch (multicastException &e) {
             std::cerr << "Exception: " << e.what() << ": " << std::strerror(errno) << std::endl;

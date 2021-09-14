@@ -33,7 +33,6 @@ private:
     std::string myName;
     const int timeoutSeconds = 30;
     struct Friend {
-        std::string name;
         time_t lastSeen{};
         std::string addr;
     };
@@ -45,17 +44,16 @@ public:
         myName = std::move(name);
     }
 
-    void add(const std::string &addr, const std::string &name) {
+    void addFriend(const std::string &addr, const std::string &name) {
         if (friends.find(name) != friends.end()) {
-            friends.erase(friends.find(name));
+            friends.find(name)->second.lastSeen = time(nullptr);
+        }else {
+            Friend fr{
+                    time(nullptr),
+                    addr,
+            };
+            friends[name] = fr;
         }
-
-        Friend fr{
-                name,
-                time(nullptr),
-                addr,
-        };
-        friends[name] = fr;
     }
 
     void removeExpired() {
@@ -69,15 +67,15 @@ public:
     void showFriendList() {
         system("clear");
         printf("My name is %s\n\n", myName.c_str());
-        printf("%-15s |%-15s |%-15s\n", "Name", "Address", "Last seen");
-        printf("------------------------------------------------------------\n");
+        printf("%-15s ||%-24s ||%-15s\n", "Name", "Address", "Last seen");
+        printf("========================================================\n");
 
         for (const auto &fr: friends) {
             char buf[100];
             const auto time = localtime(&fr.second.lastSeen);
             strftime(buf, sizeof(buf), "%H:%M:%S", time);
             std::string timeStr(buf);
-            printf("%-15s |%-15s |%-15s\n", fr.second.name.c_str(), fr.second.addr.c_str(), buf);
+            printf("%-15s ||%-24s ||%-15s\n", fr.first.c_str(), fr.second.addr.c_str(), buf);
         }
     }
 };

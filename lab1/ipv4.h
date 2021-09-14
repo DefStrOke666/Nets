@@ -4,7 +4,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <unistd.h>
 
 #include "utils.h"
 #include "exceptions.h"
@@ -19,7 +18,7 @@ private:
 
     void initSockets() {
         int optVal = 1;
-        if ((inSock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+        if ((inSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
             throw multicastException("input socket");
         }
 
@@ -43,7 +42,7 @@ private:
             throw multicastException("input: setsockopt: IP_ADD_MEMBERSHIP");
         }
 
-        if ((outSock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+        if ((outSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
             throw multicastException("output socket");
         }
     }
@@ -81,8 +80,7 @@ public:
 
             fl.removeExpired();
 
-            sleep(1);
-            int ret = poll(fd, fdsCount, 2000);
+            int ret = poll(fd, fdsCount, 500);
             if (ret < 0) {
                 throw multicastException("poll");
             }
@@ -102,7 +100,7 @@ public:
                     throw multicastException("getnameinfo");
                 }
 
-                fl.add(hostname, friendName);
+                fl.addFriend(hostname, friendName);
             }
             fl.showFriendList();
         }
