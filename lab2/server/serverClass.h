@@ -5,6 +5,8 @@
 #include <fstream>
 #include <filesystem>
 #include <thread>
+#include <unistd.h>
+#include <iomanip>
 #include "exceptions.h"
 #include "uploadThread.h"
 
