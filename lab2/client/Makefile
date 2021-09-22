@@ -1,10 +1,5 @@
 CC=g++
 CFLAGS=-I.
-DEPS = client.h clientClass.h exceptions.h
-OBJ = client.o
 
-%.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
-
-client: client.o
-	$(CC) -o $@ $^ $(CFLAGS)
+client: client.cpp
+	$(CC) -std=c++17 -o $@ $^ $(CFLAGS)
