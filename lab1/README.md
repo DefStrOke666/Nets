@@ -1,5 +1,5 @@
-##Usage
+## Usage
 ```bash
 $ make
-./multicast ipv4 or ipv6
+$ ./multicast ipv4 or ipv6
 ```
