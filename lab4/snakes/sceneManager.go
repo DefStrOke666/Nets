@@ -1,4 +1,4 @@
-package game
+package snakes
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
@@ -14,7 +14,7 @@ type Scene interface {
 	Draw(screen *ebiten.Image)
 }
 
-const transitionMaxCount = 20
+const transitionMaxCount = 15
 
 type SceneManager struct {
 	current         Scene
@@ -24,14 +24,12 @@ type SceneManager struct {
 
 type GameState struct {
 	SceneManager *SceneManager
-	Input        *Input
 }
 
-func (s *SceneManager) Update(input *Input) error {
+func (s *SceneManager) Update() error {
 	if s.transitionCount == 0 {
 		return s.current.Update(&GameState{
 			SceneManager: s,
-			Input:        input,
 		})
 	}
 

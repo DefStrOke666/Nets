@@ -1,4 +1,4 @@
-package game
+package snakes
 
 import (
 	"github.com/fogleman/gg"

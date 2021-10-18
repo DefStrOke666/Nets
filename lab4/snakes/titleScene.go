@@ -1,8 +1,7 @@
-package game
+package snakes
 
 import (
 	"image"
-	_ "image/png"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -29,7 +28,10 @@ func NewTitleScene() *TitleScene {
 		createStringImage("SNAKES", getMenuFonts(8), titleActiveColor))
 	scene.pics[1] = NewPicture(
 		createStringImage("Create", getArcadeFonts(8), idleColor),
-		createStringImage("Create", getArcadeFonts(8), activeColor))
+		createStringImage("Create", getArcadeFonts(8), activeColor),
+	).SetHandler(func(state *GameState) {
+		state.SceneManager.GoTo(NewCreateScene())
+	})
 	scene.pics[2] = NewPicture(
 		createStringImage("Join", getArcadeFonts(8), idleColor),
 		createStringImage("Join", getArcadeFonts(8), activeColor),
@@ -50,19 +52,6 @@ func NewTitleScene() *TitleScene {
 	return scene
 }
 
-func anyGamepadAbstractButtonJustPressed(i *Input) bool {
-	if !i.gamepadConfig.IsInitialized() {
-		return false
-	}
-
-	for _, b := range virtualGamepadButtons {
-		if i.gamepadConfig.IsButtonJustPressed(b) {
-			return true
-		}
-	}
-	return false
-}
-
 func (s *TitleScene) updateImgs() {
 	margin := 50
 	for i := range s.pics {
@@ -81,11 +70,6 @@ func (s *TitleScene) Update(state *GameState) error {
 	}
 
 	s.count++
-	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		state.SceneManager.GoTo(NewGameScene())
-		return nil
-	}
-
 	for i := range s.pics {
 		if s.pics[i].InBounds(ebiten.CursorPosition()) {
 			s.pics[i].SetActive(true)

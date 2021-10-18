@@ -1,4 +1,4 @@
-package game
+package snakes
 
 import (
 	"fmt"
@@ -24,6 +24,9 @@ var (
 	serverBackgroundActiveColor = ParseHexColor("334756")
 	serverTextIdleColor         = ParseHexColor("FFF8E5")
 	serverTextActiveColor       = ParseHexColor("FF4C29")
+
+	fieldCellColor1 = ParseHexColor("FFD56B")
+	fieldCellColor2 = ParseHexColor("FFB26B")
 )
 
 func ParseHexColor(s string) color.RGBA {

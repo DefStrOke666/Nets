@@ -1,4 +1,4 @@
-package game
+package snakes
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"

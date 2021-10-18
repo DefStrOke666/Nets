@@ -1,4 +1,4 @@
-package game
+package snakes
 
 import (
 	"errors"
@@ -9,13 +9,12 @@ import (
 var (
 	closeWindow  = false
 	sizeChanged  = false
-	screenWidth  = 720
-	screenHeight = 480
+	screenWidth  = 1080
+	screenHeight = 720
 )
 
 type Game struct {
 	sceneManager *SceneManager
-	input        Input
 }
 
 func (g *Game) Update() error {
@@ -24,12 +23,11 @@ func (g *Game) Update() error {
 		g.sceneManager.GoTo(NewTitleScene())
 	}
 
-	g.input.Update()
-	if err := g.sceneManager.Update(&g.input); err != nil {
+	if err := g.sceneManager.Update(); err != nil {
 		return err
 	}
 	if closeWindow {
-		return errors.New("Closed")
+		return errors.New("closed")
 	}
 	return nil
 }
