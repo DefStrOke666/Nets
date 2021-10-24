@@ -1,6 +1,7 @@
 package snakes
 
 import (
+	"github.com/borodun/nsu-nets/lab4/snakes/proto"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -24,6 +25,7 @@ type SceneManager struct {
 
 type GameState struct {
 	SceneManager *SceneManager
+	State        *proto.GameState
 }
 
 func (s *SceneManager) Update() error {

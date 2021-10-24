@@ -27,6 +27,10 @@ var (
 
 	fieldCellColor1 = ParseHexColor("FFD56B")
 	fieldCellColor2 = ParseHexColor("FFB26B")
+
+	foodColor       = ParseHexColor("E02401")
+	snakeBodyColor1 = ParseHexColor("FF8243")
+	snakeHeadColor1 = ParseHexColor("E26A2C")
 )
 
 func ParseHexColor(s string) color.RGBA {

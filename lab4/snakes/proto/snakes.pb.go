@@ -4761,20 +4761,19 @@ func NewPopulatedGameState(r randySnakes, easy bool) *GameState {
 
 func NewPopulatedGameState_Coord(r randySnakes, easy bool) *GameState_Coord {
 	this := &GameState_Coord{}
-	if r.Intn(5) != 0 {
-		v20 := int32(r.Int31())
-		if r.Intn(2) == 0 {
-			v20 *= -1
-		}
-		this.X = &v20
+
+	v20 := int32(r.Int31())
+	if r.Intn(2) == 0 {
+		v20 *= -1
 	}
-	if r.Intn(5) != 0 {
-		v21 := int32(r.Int31())
-		if r.Intn(2) == 0 {
-			v21 *= -1
-		}
-		this.Y = &v21
+	this.X = &v20
+
+	v21 := int32(r.Int31())
+	if r.Intn(2) == 0 {
+		v21 *= -1
 	}
+	this.Y = &v21
+
 	if !easy && r.Intn(10) != 0 {
 		this.XXX_unrecognized = randUnrecognizedSnakes(r, 3)
 	}

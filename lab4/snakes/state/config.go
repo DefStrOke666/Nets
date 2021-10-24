@@ -48,3 +48,31 @@ func CreatePlayer(name string) *proto.GamePlayer {
 
 	return player
 }
+
+func CreateSnake(id int, head *proto.GameState_Coord) *proto.GameState_Snake {
+	snake := &proto.GameState_Snake{
+		PlayerId:      new(int32),
+		Points:        make([]*proto.GameState_Coord, 1),
+		State:         new(proto.GameState_Snake_SnakeState),
+		HeadDirection: new(proto.Direction),
+	}
+
+	*snake.PlayerId = int32(id)
+	snake.Points[0] = head
+	*snake.State = proto.GameState_Snake_ALIVE
+	*snake.HeadDirection = proto.Direction(rand.Intn(4) + 1)
+
+	return snake
+}
+
+func CreateCoord(x, y int) *proto.GameState_Coord {
+	coord := &proto.GameState_Coord{
+		X: new(int32),
+		Y: new(int32),
+	}
+
+	*coord.X = int32(x)
+	*coord.Y = int32(y)
+
+	return coord
+}
