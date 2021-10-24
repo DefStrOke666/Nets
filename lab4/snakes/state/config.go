@@ -20,7 +20,7 @@ func NewDefaultGameConfig() *proto.GameConfig {
 	*conf.Height = 15
 	*conf.FoodStatic = 2
 	*conf.FoodPerPlayer = 1
-	*conf.StateDelayMs = 100
+	*conf.StateDelayMs = 500
 	*conf.DeadFoodProb = 0.1
 	*conf.PingDelayMs = 50
 	*conf.NodeTimeoutMs = 1000

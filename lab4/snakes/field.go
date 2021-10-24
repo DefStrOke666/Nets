@@ -88,17 +88,14 @@ func (f *Field) drawSnake(snake *proto.GameState_Snake) {
 	snakeHead := ebiten.NewImageFromImage(dc.Image())
 
 	op := &ebiten.DrawImageOptions{}
-	headX, headY := float64(snake.Points[0].GetX()), float64(snake.Points[0].GetY())
-	lastX, lastY := float64(0), float64(0)
-	println("HeadX:", headX, "HeadY:", headY)
+
+	lastX, lastY := float64(snake.Points[0].GetX()), float64(snake.Points[0].GetY())
 	for i, point := range snake.Points {
 		op.GeoM.Reset()
 		if i == 0 {
-			op.GeoM.Translate(headX*f.cellWidth, headY*f.cellWidth)
+			op.GeoM.Translate(lastX*f.cellWidth, lastY*f.cellWidth)
 			f.field.DrawImage(snakeHead, op)
-			lastX, lastY = headX, headY
 		} else {
-			println("BodyX:", lastX+float64(point.GetX()), "BodyY:", lastY+float64(point.GetY()))
 			op.GeoM.Translate((lastX+float64(point.GetX()))*f.cellWidth, (lastY+float64(point.GetY()))*f.cellWidth)
 			f.field.DrawImage(snakeCell, op)
 			lastX, lastY = lastX+float64(point.GetX()), lastY+float64(point.GetY())

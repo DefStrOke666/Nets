@@ -62,13 +62,13 @@ func NewGameScene(config *proto.GameConfig) *GameScene {
 
 	scene.maxID = 0
 	scene.state.Players = &proto.GamePlayers{}
+	scene.playerSnakes = make(map[string]*proto.GameState_Snake)
 	scene.addPlayer("borodun", proto.PlayerType_HUMAN, false)
 
 	scene.lastUpdate = time.Now()
+	scene.updateImages()
 
 	go scene.sendAnnouncement()
-
-	scene.updateImages()
 	return scene
 }
 
@@ -85,6 +85,7 @@ func (g *GameScene) addPlayer(name string, pType proto.PlayerType, view bool) {
 	if !view {
 		head, chk := g.findFreeSquare()
 		if !chk {
+			println("Couldn't find place fr snake, turning player into VIEWER")
 			*player.Role = proto.NodeRole_VIEWER
 			return
 		}
@@ -118,6 +119,7 @@ func (g *GameScene) addPlayer(name string, pType proto.PlayerType, view bool) {
 			break
 		}
 		g.state.Snakes = append(g.state.Snakes, snake)
+		g.playerSnakes[name] = snake
 	}
 }
 
@@ -211,6 +213,9 @@ func (g *GameScene) updateImages() {
 	fieldW := widthUnit * 12
 	fieldH := heightUnit * 9
 
+	buttonW := widthUnit * 3
+	buttonH := heightUnit
+
 	//scoreW := widthUnit * 4
 	//scoreH := fieldH
 	cellWidth := math.Min(float64(fieldW)/float64(g.columns), float64(fieldH)/float64(g.rows))
@@ -220,9 +225,6 @@ func (g *GameScene) updateImages() {
 	g.field.Draw(g.fieldBackground)
 
 	g.background = getRoundRect(screenWidth, screenHeight, backgroundColor)
-
-	buttonW := widthUnit * 3
-	buttonH := heightUnit
 
 	g.buttonPics[0] = NewPicture(
 		getRoundRectWithBorder(buttonW, buttonH, centreIdleColor, lineIdleColor),
@@ -238,22 +240,55 @@ func (g *GameScene) updateImages() {
 	g.buttonPics[1].SetRect(g.buttonPics[1].GetIdleImage().Bounds().Add(image.Point{X: margin*2 + buttonW, Y: fieldH + margin*2}))
 }
 
+func (g *GameScene) changeSnakeDirection(snake *proto.GameState_Snake) {
+	direction := snake.GetHeadDirection()
+	if ebiten.IsKeyPressed(ebiten.KeyArrowUp) {
+		if !(direction == proto.Direction_UP || direction == proto.Direction_DOWN) {
+			*snake.HeadDirection = proto.Direction_UP
+		}
+	} else if ebiten.IsKeyPressed(ebiten.KeyArrowDown) {
+		if !(direction == proto.Direction_UP || direction == proto.Direction_DOWN) {
+			*snake.HeadDirection = proto.Direction_DOWN
+		}
+	} else if ebiten.IsKeyPressed(ebiten.KeyArrowRight) {
+		if !(direction == proto.Direction_RIGHT || direction == proto.Direction_LEFT) {
+			*snake.HeadDirection = proto.Direction_RIGHT
+		}
+	} else if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) {
+		if !(direction == proto.Direction_RIGHT || direction == proto.Direction_LEFT) {
+			*snake.HeadDirection = proto.Direction_LEFT
+		}
+	}
+}
+
+func (g *GameScene) moveSnake(snake *proto.GameState_Snake) {
+	head := snake.Points[0]
+	if head == nil {
+		return
+	}
+	lastX, lastY := int(snake.Points[0].GetX()), int(snake.Points[0].GetY())
+
+	switch snake.GetHeadDirection() {
+	case proto.Direction_UP:
+		*head.X = int32(lastX)
+		*head.Y = int32((g.rows + lastY + 1) % g.rows)
+	case proto.Direction_DOWN:
+		*head.X = int32(lastX)
+		*head.Y = int32((g.rows + lastY - 1) % g.rows)
+	case proto.Direction_RIGHT:
+		*head.X = int32((g.columns + lastY + 1) % g.columns)
+		*head.Y = int32(lastY)
+	case proto.Direction_LEFT:
+		*head.X = int32((g.columns + lastY - 1) % g.columns)
+		*head.Y = int32(lastY)
+	}
+
+}
+
 func (g *GameScene) Update(state *GameState) error {
 	state.State = g.state
 	if sizeChanged {
 		g.updateImages()
-		err := g.field.Update(state)
-		if err != nil {
-			return err
-		}
-		g.stateChanged = false
-	}
-	if g.stateChanged {
-		err := g.field.Update(state)
-		if err != nil {
-			return err
-		}
-		g.stateChanged = false
 	}
 
 	for i := range g.buttonPics {
@@ -262,9 +297,19 @@ func (g *GameScene) Update(state *GameState) error {
 		}
 	}
 
+	g.changeSnakeDirection(g.playerSnakes["borodun"])
+
 	// Update game
 	if time.Now().After(g.lastUpdate.Add(time.Millisecond * time.Duration(g.state.Config.GetStateDelayMs()))) {
+		g.moveSnake(g.playerSnakes["borodun"])
 
+		err := g.field.Update(state)
+		if err != nil {
+			return err
+		}
+		g.stateChanged = false
+
+		g.lastUpdate = time.Now()
 	}
 
 	return nil
