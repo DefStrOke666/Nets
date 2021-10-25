@@ -19,3 +19,10 @@ spec:
         image: borodun/api-async-back
         ports:
         - containerPort: 8080
+        env:
+        - name: GEOCODE_KEY
+          value: 0c629478-cb91-455c-bb85-7b0cc93af755
+        - name: OPENTRIPMAP_KEY
+          value: 5ae2e3f221c38a28845f05b6a8908b89ccee67eed70954820a09d1a9
+        - name: OPENWEATHERMAP_KEY
+          value: 6f00ed615447e5ec2d5695114e21a90d
