@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  labels:
+    end: back
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      end: back
+  template:
+    metadata:
+      labels:
+        end: back
+    spec:
+      containers:
+      - name: borodun-back-container
+        image: borodun/api-async-back
+        ports:
+        - containerPort: 8080
