@@ -1,7 +1,7 @@
 <template>
   <div>
     <el-tabs class="app"  type="border-card">
-      <el-tab-pane label="Info">
+      <el-tab-pane label="Инфо">
         <Place class="place"/>
       </el-tab-pane>
     </el-tabs>

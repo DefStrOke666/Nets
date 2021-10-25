@@ -24,7 +24,7 @@
         <el-input-number v-model="radius" controls-position="right" :min="0" :step="100"></el-input-number>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="onSubmit">Search</el-button>
+        <el-button type="primary" @click="onSubmit">Поиск</el-button>
       </el-form-item>
     </el-form>
 
@@ -32,12 +32,15 @@
       <el-descriptions-item label="Состояние">
         <el-tag size="small">{{ weather.weather[0].description }}</el-tag>
       </el-descriptions-item>
-      <el-descriptions-item label="Температура">{{ weather.main.temp }}</el-descriptions-item>
-      <el-descriptions-item label="Ощущается как">{{ weather.main.feels_like }}</el-descriptions-item>
-      <el-descriptions-item label="Влажность">{{ weather.main.humidity }}</el-descriptions-item>
-      <el-descriptions-item label="Давление">{{ weather.main.pressure }}</el-descriptions-item>
+      <el-descriptions-item label="Температура">{{ (parseFloat(weather.main.temp) - 273.1).toFixed(1)}}℃</el-descriptions-item>
+      <el-descriptions-item label="Ощущается как">{{ (parseFloat(weather.main.feels_like) -273.1).toFixed(1)}}℃</el-descriptions-item>
+      <el-descriptions-item label="Влажность">{{ weather.main.humidity }}%</el-descriptions-item>
+      <el-descriptions-item label="Давление">{{ weather.main.pressure }}гПа</el-descriptions-item>
       <el-descriptions-item label="Скорость ветра">{{ weather.wind.speed }}м/с</el-descriptions-item>
-      <el-descriptions-item label="Направление ветра">{{ weather.wind.deg }}</el-descriptions-item>
+      <el-descriptions-item label="Направление ветра">{{ weather.wind.deg }}°</el-descriptions-item>
+    </el-descriptions>
+
+    <el-descriptions title="Места" v-if="places">
     </el-descriptions>
 
     <el-table

@@ -21,4 +21,4 @@ spec:
         - containerPort: 80
         env:
         - name: API_BASE_URL
-          value: http://ip:8080
+          value: http://45.9.24.10:32223/v1
