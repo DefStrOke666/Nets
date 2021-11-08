@@ -4,3 +4,4 @@ project(socks5)
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(proxy main.cpp proxy.cpp)
+target_link_libraries(proxy anl)

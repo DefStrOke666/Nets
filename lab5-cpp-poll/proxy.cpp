@@ -107,6 +107,7 @@ Proxy::Proxy(int port) {
 }
 
 void Proxy::run() {
+    std::cout << "Started accepting connections" << std::endl;
     while (true) {
         try {
             pollManage();
@@ -156,7 +157,7 @@ void Proxy::pollManage() {
         pollDescryptors->push_back(c);
     }
 
-    if (not waitedCounter) {
+    if (!waitedCounter) {
         removeDeadDescriptors();
     }
 }
@@ -436,7 +437,7 @@ void Proxy::getResolveResult(std::vector<pollfd>::iterator *clientIterator) {
     resolver = (ResolverStructure *) fdsi.ssi_ptr;
     auto client = resolver->waited;
 
-    if (not resolver->host->ar_result) {
+    if (!resolver->host->ar_result) {
         waitedCounter--;
         response[1] = HOST_NOT_REACHABLE;
         send(client->fd, response, sizeof(response), 0);
