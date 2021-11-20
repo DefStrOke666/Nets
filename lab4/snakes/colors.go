@@ -25,6 +25,14 @@ var (
 	serverTextIdleColor         = ParseHexColor("FFF8E5")
 	serverTextActiveColor       = ParseHexColor("FF4C29")
 
+	scoreCentreColor = ParseHexColor("142F43")
+	scoreLineColor   = ParseHexColor("FFAB4C")
+	scoreTextColor   = ParseHexColor("99FEFF")
+
+	configCentreColor = ParseHexColor("142F43")
+	configLineColor   = ParseHexColor("FFAB4C")
+	configTextColor   = ParseHexColor("99FEFF")
+
 	fieldCellColor1 = ParseHexColor("FFD56B")
 	fieldCellColor2 = ParseHexColor("FFB26B")
 

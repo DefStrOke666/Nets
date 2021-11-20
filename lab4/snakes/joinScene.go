@@ -207,14 +207,14 @@ func (j *JoinScene) updateImages() {
 	buttonH := heightUnit
 
 	j.buttonPics[0] = NewPicture(
-		getRoundRectWithBorder(buttonW, buttonH, centreIdleColor, lineIdleColor),
-		getRoundRectWithBorder(buttonW, buttonH, centreActiveColor, lineActiveColor))
+		borderedRoundRectWithText(buttonW, buttonH, centreIdleColor, lineIdleColor, "Joim", getMenuFonts(4)),
+		borderedRoundRectWithText(buttonW, buttonH, centreActiveColor, lineActiveColor, "Join", getMenuFonts(4)))
 	j.buttonPics[1] = NewPicture(
-		getRoundRectWithBorder(buttonW, buttonH, centreIdleColor, lineIdleColor),
-		getRoundRectWithBorder(buttonW, buttonH, centreActiveColor, lineActiveColor))
+		borderedRoundRectWithText(buttonW, buttonH, centreIdleColor, lineIdleColor, "View", getMenuFonts(4)),
+		borderedRoundRectWithText(buttonW, buttonH, centreActiveColor, lineActiveColor, "View", getMenuFonts(4)))
 	j.exitButtonPic = NewPicture(
-		getRoundRectWithBorder(buttonW, buttonH, centreIdleColor, lineIdleColor),
-		getRoundRectWithBorder(buttonW, buttonH, centreActiveColor, lineActiveColor),
+		borderedRoundRectWithText(buttonW, buttonH, centreIdleColor, lineIdleColor, "Return", getMenuFonts(4)),
+		borderedRoundRectWithText(buttonW, buttonH, centreActiveColor, lineActiveColor, "Return", getMenuFonts(4)),
 	).SetHandler(func(state *GameState) {
 		j.exit = true
 		state.SceneManager.GoTo(NewTitleScene())

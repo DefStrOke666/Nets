@@ -605,7 +605,7 @@ type GameState_Snake struct {
 	// Каждая следующая - смещение следующей "ключевой" точки относительно предыдущей,
 	// в частности последняя точка хранит смещение хвоста змеи относительно предыдущей "ключевой" точки.
 	Points               []*GameState_Coord          `protobuf:"bytes,2,rep,name=points" json:"points,omitempty"`
-	State                *GameState_Snake_SnakeState `protobuf:"varint,3,req,name=state,enum=snakes.GameState_Snake_SnakeState,def=0" json:"state,omitempty"`
+	State                *GameState_Snake_SnakeState `protobuf:"varint,3,req,name=utils,enum=snakes.GameState_Snake_SnakeState,def=0" json:"utils,omitempty"`
 	HeadDirection        *Direction                  `protobuf:"varint,4,req,name=head_direction,json=headDirection,enum=snakes.Direction" json:"head_direction,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                    `json:"-"`
 	XXX_unrecognized     []byte                      `json:"-"`
@@ -746,7 +746,7 @@ type GameMessage_Ack struct {
 	Ack *GameMessage_AckMsg `protobuf:"bytes,4,opt,name=ack,oneof" json:"ack,omitempty"`
 }
 type GameMessage_State struct {
-	State *GameMessage_StateMsg `protobuf:"bytes,5,opt,name=state,oneof" json:"state,omitempty"`
+	State *GameMessage_StateMsg `protobuf:"bytes,5,opt,name=utils,oneof" json:"utils,omitempty"`
 }
 type GameMessage_Announcement struct {
 	Announcement *GameMessage_AnnouncementMsg `protobuf:"bytes,6,opt,name=announcement,oneof" json:"announcement,omitempty"`
@@ -995,7 +995,7 @@ var xxx_messageInfo_GameMessage_AckMsg proto.InternalMessageInfo
 
 // Центральный узел сообщает отсальным игрокам состояние игры
 type GameMessage_StateMsg struct {
-	State                *GameState `protobuf:"bytes,1,req,name=state" json:"state,omitempty"`
+	State                *GameState `protobuf:"bytes,1,req,name=utils" json:"utils,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
 	XXX_unrecognized     []byte     `json:"-"`
 	XXX_sizecache        int32      `json:"-"`
@@ -4038,7 +4038,7 @@ func (m *GameState_Snake) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		dAtA[i] = 0x20
 	}
 	if m.State == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("state")
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("utils")
 	} else {
 		i = encodeVarintSnakes(dAtA, i, uint64(*m.State))
 		i--
@@ -4402,7 +4402,7 @@ func (m *GameMessage_StateMsg) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.State == nil {
-		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("state")
+		return 0, github_com_gogo_protobuf_proto.NewRequiredNotSetError("utils")
 	} else {
 		{
 			size, err := m.State.MarshalToSizedBuffer(dAtA[:i])
@@ -6768,7 +6768,7 @@ func (m *GameState_Snake) Unmarshal(dAtA []byte) error {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("player_id")
 	}
 	if hasFields[0]&uint64(0x00000002) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("state")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("utils")
 	}
 	if hasFields[0]&uint64(0x00000004) == 0 {
 		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("head_direction")
@@ -7437,7 +7437,7 @@ func (m *GameMessage_StateMsg) Unmarshal(dAtA []byte) error {
 		}
 	}
 	if hasFields[0]&uint64(0x00000001) == 0 {
-		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("state")
+		return github_com_gogo_protobuf_proto.NewRequiredNotSetError("utils")
 	}
 
 	if iNdEx > l {

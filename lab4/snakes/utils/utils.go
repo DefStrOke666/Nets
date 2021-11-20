@@ -1,4 +1,4 @@
-package state
+package utils
 
 import (
 	"github.com/borodun/nsu-nets/lab4/snakes/proto"
@@ -17,11 +17,11 @@ func NewDefaultGameConfig() *proto.GameConfig {
 		NodeTimeoutMs: new(int32),
 	}
 	*conf.Width = 30
-	*conf.Height = 15
-	*conf.FoodStatic = 2
-	*conf.FoodPerPlayer = 1
-	*conf.StateDelayMs = 500
-	*conf.DeadFoodProb = 0.1
+	*conf.Height = 30
+	*conf.FoodStatic = 5
+	*conf.FoodPerPlayer = 2
+	*conf.StateDelayMs = 100
+	*conf.DeadFoodProb = 0.5
 	*conf.PingDelayMs = 50
 	*conf.NodeTimeoutMs = 1000
 	return conf

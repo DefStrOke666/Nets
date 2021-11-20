@@ -1,7 +1,7 @@
 package snakes
 
 import (
-	"github.com/borodun/nsu-nets/lab4/snakes/state"
+	"github.com/borodun/nsu-nets/lab4/snakes/utils"
 	"github.com/hajimehoshi/ebiten/v2"
 	"image"
 )
@@ -50,14 +50,14 @@ func (c *CreateScene) updateImages() {
 	buttonH := heightUnit
 
 	c.buttonPics[0] = NewPicture(
-		getRoundRectWithBorder(buttonW, buttonH, centreIdleColor, lineIdleColor),
-		getRoundRectWithBorder(buttonW, buttonH, centreActiveColor, lineActiveColor),
+		borderedRoundRectWithText(buttonW, buttonH, centreIdleColor, lineIdleColor, "Start", getMenuFonts(4)),
+		borderedRoundRectWithText(buttonW, buttonH, centreActiveColor, lineActiveColor, "Start", getMenuFonts(4)),
 	).SetHandler(func(s *GameState) {
-		s.SceneManager.GoTo(NewGameScene(state.NewDefaultGameConfig()))
+		s.SceneManager.GoTo(NewGameScene(utils.NewDefaultGameConfig()))
 	})
 	c.buttonPics[1] = NewPicture(
-		getRoundRectWithBorder(buttonW, buttonH, centreIdleColor, lineIdleColor),
-		getRoundRectWithBorder(buttonW, buttonH, centreActiveColor, lineActiveColor),
+		borderedRoundRectWithText(buttonW, buttonH, centreIdleColor, lineIdleColor, "Return", getMenuFonts(4)),
+		borderedRoundRectWithText(buttonW, buttonH, centreActiveColor, lineActiveColor, "Return", getMenuFonts(4)),
 	).SetHandler(func(s *GameState) {
 		s.SceneManager.GoTo(NewTitleScene())
 	})
