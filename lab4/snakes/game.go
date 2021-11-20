@@ -9,7 +9,7 @@ import (
 var (
 	closeWindow  = false
 	sizeChanged  = false
-	screenWidth  = 1080
+	screenWidth  = 1100
 	screenHeight = 720
 )
 

@@ -5513,8 +5513,7 @@ func (this *GameConfig) String() string {
 		`StateDelayMs:` + valueToStringSnakes(this.StateDelayMs) + `,`,
 		`DeadFoodProb:` + valueToStringSnakes(this.DeadFoodProb) + `,`,
 		`PingDelayMs:` + valueToStringSnakes(this.PingDelayMs) + `,`,
-		`NodeTimeoutMs:` + valueToStringSnakes(this.NodeTimeoutMs) + `,`,
-		`XXX_unrecognized:` + fmt.Sprintf("%v", this.XXX_unrecognized) + `,`}, "")
+		`NodeTimeoutMs:` + valueToStringSnakes(this.NodeTimeoutMs) + `,`}, "")
 	return s
 }
 func (this *GamePlayers) String() string {
@@ -5780,7 +5779,7 @@ func valueToStringSnakes(v interface{}) string {
 		return "nil"
 	}
 	pv := reflect.Indirect(rv).Interface()
-	return fmt.Sprintf("*%v", pv)
+	return fmt.Sprintf(" %v", pv)
 }
 func (m *GamePlayer) Unmarshal(dAtA []byte) error {
 	var hasFields [1]uint64
