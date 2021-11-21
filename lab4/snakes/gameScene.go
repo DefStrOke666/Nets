@@ -5,10 +5,8 @@ import (
 	"github.com/borodun/nsu-nets/lab4/snakes/utils"
 	"github.com/hajimehoshi/ebiten/v2"
 	"image"
-	"log"
 	"math"
 	"math/rand"
-	"net"
 	"strconv"
 	"strings"
 	"time"
@@ -42,7 +40,7 @@ type GameScene struct {
 	scoreW    int
 	scoreH    int
 
-	buttonPics []*Picture
+	buttonPics []*utils.Picture
 	exit       bool
 
 	maxID int
@@ -63,7 +61,7 @@ func NewGameScene(config *proto.GameConfig) *GameScene {
 	scene.columns = int(*scene.state.Config.Width)
 	scene.rows = int(*scene.state.Config.Height)
 
-	scene.buttonPics = make([]*Picture, 2)
+	scene.buttonPics = make([]*utils.Picture, 2)
 	scene.snakeCells = make([][]bool, scene.columns)
 	for i := range scene.snakeCells {
 		scene.snakeCells[i] = make([]bool, scene.rows)
@@ -91,9 +89,9 @@ func NewGameScene(config *proto.GameConfig) *GameScene {
 }
 
 func (g *GameScene) updateImages() {
-	margin := int(margin)
-	spacingsV := margin*3 + int(lineThickness*2)
-	spacingsH := margin*3 + int(lineThickness*2)
+	margin := int(utils.Margin)
+	spacingsV := margin*3 + int(utils.LineThickness*2)
+	spacingsH := margin*3 + int(utils.LineThickness*2)
 
 	widthUnit := (screenWidth - spacingsH) / 16
 	heightUnit := (screenHeight - spacingsV) / 10
@@ -109,46 +107,46 @@ func (g *GameScene) updateImages() {
 	buttonH := heightUnit
 
 	g.scoreW = (screenWidth - spacingsH - actialW - margin) / 2
-	g.scoreH = actialH + int(lineThickness*2)
+	g.scoreH = actialH + int(utils.LineThickness*2)
 	g.drawScore()
 	g.drawConfig()
 
 	g.field = NewField(g.columns, g.rows, cellWidth)
-	g.fieldBackground = getRectWithBorder(actialW+int(lineThickness*2), actialH+int(lineThickness*2), centreActiveColor, lineActiveColor)
+	g.fieldBackground = utils.GetRectWithBorder(actialW+int(utils.LineThickness*2), actialH+int(utils.LineThickness*2), utils.CentreActiveColor, utils.LineActiveColor)
 	g.field.Draw(g.fieldBackground)
 
-	g.background = getRoundRect(screenWidth, screenHeight, backgroundColor)
+	g.background = utils.GetRoundRect(screenWidth, screenHeight, utils.BackgroundColor)
 
-	g.buttonPics[0] = NewPicture(
-		borderedRoundRectWithText(buttonW, buttonH, centreIdleColor, lineIdleColor, "View", getMenuFonts(4)),
-		borderedRoundRectWithText(buttonW, buttonH, centreActiveColor, lineActiveColor, "View", getMenuFonts(4)))
-	g.buttonPics[1] = NewPicture(
-		borderedRoundRectWithText(buttonW, buttonH, centreIdleColor, lineIdleColor, "Exit", getMenuFonts(4)),
-		borderedRoundRectWithText(buttonW, buttonH, centreActiveColor, lineActiveColor, "Exit", getMenuFonts(4)),
-	).SetHandler(func(state *GameState) {
+	g.buttonPics[0] = utils.NewPicture(
+		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreIdleColor, utils.LineIdleColor, "View", utils.GetMenuFonts(4)),
+		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreActiveColor, utils.LineActiveColor, "View", utils.GetMenuFonts(4)))
+	g.buttonPics[1] = utils.NewPicture(
+		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreIdleColor, utils.LineIdleColor, "Exit", utils.GetMenuFonts(4)),
+		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreActiveColor, utils.LineActiveColor, "Exit", utils.GetMenuFonts(4)),
+	).SetHandler(func() {
 		g.exit = true
-		state.SceneManager.GoTo(NewTitleScene())
+		sceneManager.GoTo(NewTitleScene())
 	})
-	g.buttonPics[0].SetRect(g.buttonPics[0].GetIdleImage().Bounds().Add(image.Point{X: margin, Y: fieldH + margin*2 + int(lineThickness*2)}))
-	g.buttonPics[1].SetRect(g.buttonPics[1].GetIdleImage().Bounds().Add(image.Point{X: margin*2 + buttonW, Y: fieldH + margin*2 + int(lineThickness*2)}))
+	g.buttonPics[0].SetRect(g.buttonPics[0].GetIdleImage().Bounds().Add(image.Point{X: margin, Y: fieldH + margin*2 + int(utils.LineThickness*2)}))
+	g.buttonPics[1].SetRect(g.buttonPics[1].GetIdleImage().Bounds().Add(image.Point{X: margin*2 + buttonW, Y: fieldH + margin*2 + int(utils.LineThickness*2)}))
 }
 
 func (g *GameScene) drawScore() {
-	namesImg := ebiten.NewImage(textWidth("VeryLongName", getMenuFonts(3)), g.scoreH)
-	numsImg := ebiten.NewImage(textWidth("9999", getMenuFonts(3)), g.scoreH)
+	namesImg := ebiten.NewImage(utils.TextWidth("VeryLongName", utils.GetMenuFonts(3)), g.scoreH)
+	numsImg := ebiten.NewImage(utils.TextWidth("9999", utils.GetMenuFonts(3)), g.scoreH)
 
 	op := &ebiten.DrawImageOptions{}
-	bckImg := getRoundRectWithBorder(g.scoreW, g.scoreH, scoreCentreColor, scoreLineColor)
+	bckImg := utils.GetRoundRectWithBorder(g.scoreW, g.scoreH, utils.ScoreCentreColor, utils.ScoreLineColor)
 	for _, player := range g.state.Players.GetPlayers() {
 		score := strconv.Itoa(int(player.GetScore()))
 		name := player.GetName()
-		textH := textHeight(name+score, getMenuFonts(3))
-		namesImg.DrawImage(createStringImage(name, getMenuFonts(3), scoreTextColor), op)
-		numsImg.DrawImage(createStringImage(score, getMenuFonts(3), scoreTextColor), op)
-		op.GeoM.Translate(0, float64(textH)+margin)
+		textH := utils.TextHeight(name+score, utils.GetMenuFonts(3))
+		namesImg.DrawImage(utils.CreateStringImage(name, utils.GetMenuFonts(3), utils.ScoreTextColor), op)
+		numsImg.DrawImage(utils.CreateStringImage(score, utils.GetMenuFonts(3), utils.ScoreTextColor), op)
+		op.GeoM.Translate(0, float64(textH)+utils.Margin)
 	}
 	op2 := &ebiten.DrawImageOptions{}
-	op2.GeoM.Translate(margin, margin)
+	op2.GeoM.Translate(utils.Margin, utils.Margin)
 	bckImg.DrawImage(namesImg, op2)
 	op2.GeoM.Translate(float64(namesImg.Bounds().Max.X), 0)
 	bckImg.DrawImage(numsImg, op2)
@@ -156,17 +154,17 @@ func (g *GameScene) drawScore() {
 }
 
 func (g *GameScene) drawConfig() {
-	img := getRectWithBorder(g.scoreW, g.scoreH, configCentreColor, configLineColor)
+	img := utils.GetRectWithBorder(g.scoreW, g.scoreH, utils.ConfigCentreColor, utils.ConfigLineColor)
 
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(margin, margin)
+	op.GeoM.Translate(utils.Margin, utils.Margin)
 
 	configStr := strings.Split(g.state.Config.String(), ",")
 	for _, s := range configStr {
 		if s != "" {
-			textH := textHeight(s, getMenuFonts(3))
-			img.DrawImage(createStringImage(s, getMenuFonts(3), configTextColor), op)
-			op.GeoM.Translate(0, float64(textH)+margin)
+			textH := utils.TextHeight(s, utils.GetMenuFonts(3))
+			img.DrawImage(utils.CreateStringImage(s, utils.GetMenuFonts(3), utils.ConfigTextColor), op)
+			op.GeoM.Translate(0, float64(textH)+utils.Margin)
 		}
 	}
 
@@ -278,36 +276,6 @@ func (g *GameScene) addFood(count int) {
 	g.stateChanged = true
 }
 
-func (g *GameScene) sendAnnouncement() {
-	annMsg := &proto.GameMessage_AnnouncementMsg{}
-	annMsg.CanJoin = new(bool)
-
-	addr, err := net.ResolveUDPAddr("udp", multicastAddr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	c, err := net.DialUDP("udp", nil, addr)
-	for {
-		annMsg.Config = g.state.Config
-		annMsg.Players = g.state.Players
-		*annMsg.CanJoin = g.canJoin
-		marshal, err := annMsg.Marshal()
-		if err != nil {
-			log.Fatal(err)
-		}
-		_, err = c.Write(marshal)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		time.Sleep(1 * time.Second)
-		if g.exit {
-			println("Stopped announcing")
-			return
-		}
-	}
-}
-
 func (g *GameScene) Update(state *GameState) error {
 	state.State = g.state
 	if sizeChanged {
@@ -316,7 +284,7 @@ func (g *GameScene) Update(state *GameState) error {
 
 	for i := range g.buttonPics {
 		if g.canJoin {
-			g.buttonPics[i].Update(state)
+			g.buttonPics[i].Update()
 		}
 	}
 
@@ -357,12 +325,12 @@ func (g *GameScene) Update(state *GameState) error {
 }
 
 func (g *GameScene) Draw(screen *ebiten.Image) {
-	screen.Fill(fillColor)
+	screen.Fill(utils.FillColor)
 	screen.DrawImage(g.background, &ebiten.DrawImageOptions{})
 
 	g.field.Draw(g.fieldBackground)
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(margin, margin)
+	op.GeoM.Translate(utils.Margin, utils.Margin)
 	screen.DrawImage(g.fieldBackground, op)
 
 	for i := range g.buttonPics {
@@ -370,8 +338,8 @@ func (g *GameScene) Draw(screen *ebiten.Image) {
 	}
 
 	op.GeoM.Reset()
-	op.GeoM.Translate(float64(screenWidth-g.scoreW-int(margin)), margin)
+	op.GeoM.Translate(float64(screenWidth-g.scoreW-int(utils.Margin)), utils.Margin)
 	screen.DrawImage(g.scoreImg, op)
-	op.GeoM.Translate(float64(-g.scoreW-int(margin)), 0)
+	op.GeoM.Translate(float64(-g.scoreW-int(utils.Margin)), 0)
 	screen.DrawImage(g.configImg, op)
 }

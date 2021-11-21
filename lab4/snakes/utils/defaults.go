@@ -76,3 +76,17 @@ func CreateCoord(x, y int) *proto.GameState_Coord {
 
 	return coord
 }
+
+func CreateJoinMessage(name string, view bool) *proto.GameMessage_JoinMsg {
+	joinMsg := &proto.GameMessage_JoinMsg{
+		PlayerType: new(proto.PlayerType),
+		OnlyView:   new(bool),
+		Name:       new(string),
+	}
+
+	*joinMsg.PlayerType = proto.PlayerType_HUMAN
+	*joinMsg.OnlyView = view
+	*joinMsg.Name = name
+
+	return joinMsg
+}

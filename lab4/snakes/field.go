@@ -2,6 +2,7 @@ package snakes
 
 import (
 	"github.com/borodun/nsu-nets/lab4/snakes/proto"
+	"github.com/borodun/nsu-nets/lab4/snakes/utils"
 	"github.com/fogleman/gg"
 	"github.com/hajimehoshi/ebiten/v2"
 	"math"
@@ -40,9 +41,9 @@ func (f *Field) createField() {
 		for x := 0; x < f.columns; x++ {
 			dc.DrawRectangle(float64(x*f.cellWidth), float64(y*f.cellWidth), float64(f.cellWidth), float64(f.cellWidth))
 			if (x+y)%2 == 0 {
-				dc.SetColor(fieldCellColor1)
+				dc.SetColor(utils.FieldCellColor1)
 			} else {
-				dc.SetColor(fieldCellColor2)
+				dc.SetColor(utils.FieldCellColor2)
 			}
 			dc.Fill()
 		}
@@ -53,7 +54,7 @@ func (f *Field) createField() {
 func (f *Field) createFood() {
 	dc := gg.NewContext(int(f.cellWidth), int(f.cellWidth))
 	dc.DrawRectangle(0, 0, float64(f.cellWidth), float64(f.cellWidth))
-	dc.SetColor(foodColor)
+	dc.SetColor(utils.FoodColor)
 	dc.Fill()
 	f.foodImg = ebiten.NewImageFromImage(dc.Image())
 }
@@ -76,13 +77,13 @@ func (f *Field) drawSnakes(snakes []*proto.GameState_Snake) {
 func (f *Field) drawSnake(snake *proto.GameState_Snake) {
 	dc := gg.NewContext(int(f.cellWidth), int(f.cellWidth))
 	dc.DrawRectangle(0, 0, float64(f.cellWidth), float64(f.cellWidth))
-	dc.SetColor(snakeBodyColor1)
+	dc.SetColor(utils.SnakeBodyColor1)
 	dc.Fill()
 	snakeCell := ebiten.NewImageFromImage(dc.Image())
 
 	dc = gg.NewContext(int(f.cellWidth), int(f.cellWidth))
 	dc.DrawRectangle(0, 0, float64(f.cellWidth), float64(f.cellWidth))
-	dc.SetColor(snakeHeadColor1)
+	dc.SetColor(utils.SnakeHeadColor1)
 	dc.Fill()
 	snakeHead := ebiten.NewImageFromImage(dc.Image())
 
@@ -126,6 +127,6 @@ func (f *Field) Update(state *GameState) error {
 
 func (f *Field) Draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(lineThickness, lineThickness)
+	op.GeoM.Translate(utils.LineThickness, utils.LineThickness)
 	screen.DrawImage(f.field, op)
 }

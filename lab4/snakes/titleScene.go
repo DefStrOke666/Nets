@@ -1,6 +1,7 @@
 package snakes
 
 import (
+	"github.com/borodun/nsu-nets/lab4/snakes/utils"
 	"image"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -10,11 +11,11 @@ import (
 var imageBackground *ebiten.Image
 
 func init() {
-	imageBackground = getRoundRect(15, 15, backgroundColor)
+	imageBackground = utils.GetRoundRect(15, 15, utils.BackgroundColor)
 }
 
 type TitleScene struct {
-	pics []*Picture
+	pics []*utils.Picture
 
 	count int
 }
@@ -22,27 +23,27 @@ type TitleScene struct {
 func NewTitleScene() *TitleScene {
 	scene := &TitleScene{}
 
-	scene.pics = make([]*Picture, 4)
-	scene.pics[0] = NewPicture(
-		createStringImage("SNAKES", getMenuFonts(8), titleIdleColor),
-		createStringImage("SNAKES", getMenuFonts(8), titleActiveColor))
-	scene.pics[1] = NewPicture(
-		createStringImage("Create", getArcadeFonts(8), idleColor),
-		createStringImage("Create", getArcadeFonts(8), activeColor),
-	).SetHandler(func(state *GameState) {
-		state.SceneManager.GoTo(NewCreateScene())
+	scene.pics = make([]*utils.Picture, 4)
+	scene.pics[0] = utils.NewPicture(
+		utils.CreateStringImage("SNAKES", utils.GetMenuFonts(8), utils.TitleIdleColor),
+		utils.CreateStringImage("SNAKES", utils.GetMenuFonts(8), utils.TitleActiveColor))
+	scene.pics[1] = utils.NewPicture(
+		utils.CreateStringImage("Create", utils.GetArcadeFonts(8), utils.IdleColor),
+		utils.CreateStringImage("Create", utils.GetArcadeFonts(8), utils.ActiveColor),
+	).SetHandler(func() {
+		sceneManager.GoTo(NewCreateScene())
 	})
-	scene.pics[2] = NewPicture(
-		createStringImage("Join", getArcadeFonts(8), idleColor),
-		createStringImage("Join", getArcadeFonts(8), activeColor),
-	).SetHandler(func(state *GameState) {
+	scene.pics[2] = utils.NewPicture(
+		utils.CreateStringImage("Join", utils.GetArcadeFonts(8), utils.IdleColor),
+		utils.CreateStringImage("Join", utils.GetArcadeFonts(8), utils.ActiveColor),
+	).SetHandler(func() {
 		println("server list")
-		state.SceneManager.GoTo(NewJoinScene())
+		sceneManager.GoTo(NewJoinScene())
 	})
-	scene.pics[3] = NewPicture(
-		createStringImage("Exit", getArcadeFonts(8), idleColor),
-		createStringImage("Exit", getArcadeFonts(8), activeColor),
-	).SetHandler(func(state *GameState) {
+	scene.pics[3] = utils.NewPicture(
+		utils.CreateStringImage("Exit", utils.GetArcadeFonts(8), utils.IdleColor),
+		utils.CreateStringImage("Exit", utils.GetArcadeFonts(8), utils.ActiveColor),
+	).SetHandler(func() {
 		println("exit")
 		closeWindow = true
 	})
@@ -74,7 +75,7 @@ func (s *TitleScene) Update(state *GameState) error {
 		if s.pics[i].InBounds(ebiten.CursorPosition()) {
 			s.pics[i].SetActive(true)
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-				s.pics[i].Handle(state)
+				s.pics[i].Handle()
 			}
 		} else {
 			s.pics[i].SetActive(false)
@@ -85,7 +86,7 @@ func (s *TitleScene) Update(state *GameState) error {
 }
 
 func (s *TitleScene) Draw(screen *ebiten.Image) {
-	screen.Fill(fillColor)
+	screen.Fill(utils.FillColor)
 	s.drawTitleBackground(screen, s.count)
 	for i := range s.pics {
 		s.pics[i].Draw(screen)

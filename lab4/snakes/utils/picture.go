@@ -1,4 +1,4 @@
-package snakes
+package utils
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
@@ -11,7 +11,7 @@ type Picture struct {
 	activeImage *ebiten.Image
 	rect        image.Rectangle
 	active      bool
-	handler     func(state *GameState)
+	handler     func()
 }
 
 func NewPicture(idleImage *ebiten.Image, activeImage *ebiten.Image) *Picture {
@@ -20,7 +20,7 @@ func NewPicture(idleImage *ebiten.Image, activeImage *ebiten.Image) *Picture {
 	pic.idleImage = idleImage
 	pic.activeImage = activeImage
 	pic.active = false
-	pic.handler = func(state *GameState) {
+	pic.handler = func() {
 		return
 	}
 
@@ -59,13 +59,13 @@ func (p *Picture) IsActive() bool {
 	return p.active
 }
 
-func (p *Picture) SetHandler(handler func(state *GameState)) *Picture {
+func (p *Picture) SetHandler(handler func()) *Picture {
 	p.handler = handler
 	return p
 }
 
-func (p *Picture) Handle(state *GameState) {
-	p.handler(state)
+func (p *Picture) Handle() {
+	p.handler()
 }
 
 func (p *Picture) InBounds(x, y int) bool {
@@ -75,11 +75,11 @@ func (p *Picture) InBounds(x, y int) bool {
 	return false
 }
 
-func (p *Picture) Update(state *GameState) {
+func (p *Picture) Update() {
 	if p.InBounds(ebiten.CursorPosition()) {
 		p.SetActive(true)
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-			p.Handle(state)
+			p.Handle()
 		}
 	} else {
 		p.SetActive(false)

@@ -1,4 +1,4 @@
-package snakes
+package utils
 
 import (
 	"github.com/golang/freetype/truetype"
@@ -48,7 +48,7 @@ func getFontByPath(path string) *truetype.Font {
 	return tt
 }
 
-func getArcadeFonts(scale int) font.Face {
+func GetArcadeFonts(scale int) font.Face {
 	if arcadeFonts == nil {
 		tt := getFontByPath("assets/MachineGunk.ttf")
 
@@ -65,7 +65,7 @@ func getArcadeFonts(scale int) font.Face {
 	return arcadeFonts[scale]
 }
 
-func getMenuFonts(scale int) font.Face {
+func GetMenuFonts(scale int) font.Face {
 	if menuFonts == nil {
 		tt := getFontByPath("assets/SerpensRegular.ttf")
 
@@ -82,7 +82,7 @@ func getMenuFonts(scale int) font.Face {
 	return menuFonts[scale]
 }
 
-func textWidth(str string, fontFace font.Face) int {
+func TextWidth(str string, fontFace font.Face) int {
 	maxW := 0
 	for _, line := range strings.Split(str, "\n") {
 		b, _ := font.BoundString(fontFace, line)
@@ -94,7 +94,7 @@ func textWidth(str string, fontFace font.Face) int {
 	return maxW
 }
 
-func textHeight(str string, fontFace font.Face) int {
+func TextHeight(str string, fontFace font.Face) int {
 	maxH := 0
 	for _, line := range strings.Split(str, "\n") {
 		b, _ := font.BoundString(fontFace, line)
@@ -114,26 +114,26 @@ func drawTextWithShadow(rt *ebiten.Image, str string, x, y, scale int, clr color
 	offsetY := arcadeFontBaseSize * scale
 	for _, line := range strings.Split(str, "\n") {
 		y += offsetY
-		text.Draw(rt, line, getArcadeFonts(scale), x+1, y+1, shadowColor)
-		text.Draw(rt, line, getArcadeFonts(scale), x, y, clr)
+		text.Draw(rt, line, GetArcadeFonts(scale), x+1, y+1, shadowColor)
+		text.Draw(rt, line, GetArcadeFonts(scale), x, y, clr)
 	}
 }
 
 func drawTextWithShadowCenter(rt *ebiten.Image, str string, x, y, scale int, clr color.Color, width int) {
-	w := textWidth(str, getArcadeFonts(scale))
+	w := TextWidth(str, GetArcadeFonts(scale))
 	x += (width - w) / 2
 	drawTextWithShadow(rt, str, x, y, scale, clr)
 }
 
 func drawTextWithShadowRight(rt *ebiten.Image, str string, x, y, scale int, clr color.Color, width int) {
-	w := textWidth(str, getArcadeFonts(scale))
+	w := TextWidth(str, GetArcadeFonts(scale))
 	x += width - w
 	drawTextWithShadow(rt, str, x, y, scale, clr)
 }
 
-func createStringImage(str string, fontFace font.Face, clr color.Color) *ebiten.Image {
-	w := textWidth(str, fontFace)
-	h := textHeight(str, fontFace)
+func CreateStringImage(str string, fontFace font.Face, clr color.Color) *ebiten.Image {
+	w := TextWidth(str, fontFace)
+	h := TextHeight(str, fontFace)
 
 	img := ebiten.NewImage(w, h)
 	img.Clear()

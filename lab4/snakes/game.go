@@ -11,19 +11,18 @@ var (
 	sizeChanged  = false
 	screenWidth  = 1100
 	screenHeight = 720
+	sceneManager *SceneManager
 )
 
-type Game struct {
-	sceneManager *SceneManager
-}
+type Game struct{}
 
 func (g *Game) Update() error {
-	if g.sceneManager == nil {
-		g.sceneManager = &SceneManager{}
-		g.sceneManager.GoTo(NewTitleScene())
+	if sceneManager == nil {
+		sceneManager = &SceneManager{}
+		sceneManager.GoTo(NewTitleScene())
 	}
 
-	if err := g.sceneManager.Update(); err != nil {
+	if err := sceneManager.Update(); err != nil {
 		return err
 	}
 	if closeWindow {
@@ -33,7 +32,7 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	g.sceneManager.Draw(screen)
+	sceneManager.Draw(screen)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
