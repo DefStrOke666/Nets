@@ -12,12 +12,15 @@ func (j *JoinScene) receiveAnnouncements() {
 	println("Started receiving messages\n")
 	addr, err := net.ResolveUDPAddr("udp", multicastAddr)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("ResolveUDPAddr:", err)
 	}
 	l, err := net.ListenMulticastUDP("udp", nil, addr)
+	if err != nil {
+		log.Fatal("ListenMulticastUDP:", err)
+	}
 	err = l.SetReadBuffer(maxDatagramSize)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("SetReadBuffer:", err)
 	}
 
 	b := make([]byte, maxDatagramSize)
@@ -26,7 +29,7 @@ func (j *JoinScene) receiveAnnouncements() {
 		if err != nil {
 			log.Fatal("ReadFromUDP failed:", err)
 		}
-		println("Addr:", addr.String())
+		println("Announcement from addr:", addr.String())
 
 		msg := &proto.GameMessage_AnnouncementMsg{}
 		err = msg.Unmarshal(b[:read])
@@ -53,26 +56,28 @@ func (j *JoinScene) receiveAnnouncements() {
 	}
 }
 
-func (j *JoinScene) joinServer(addr *net.UDPAddr) bool {
-	joinMsg := utils.CreateJoinMessage("client", false)
+func (j *JoinScene) joinServer(addr *net.UDPAddr, view bool) bool {
+	joinMsg := utils.CreateJoinMessage("client", view)
 	conn, err := net.Dial("udp", addr.String())
 	if err != nil {
 		fmt.Printf("Dial error %v", err)
 		return false
 	}
+	println("Connected to:", conn.RemoteAddr().String())
+
 	marshal, err := joinMsg.Marshal()
 	if err != nil {
 		log.Fatal(err)
 	}
 	_, err = conn.Write(marshal)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Write failed:", err)
 	}
 
 	b := make([]byte, maxDatagramSize)
 	read, err := conn.Read(b)
 	if err != nil {
-		log.Fatal("ReadFromUDP failed:", err)
+		log.Fatal("Read failed:", err)
 	}
 
 	msg := &proto.GameMessage{}
@@ -81,23 +86,14 @@ func (j *JoinScene) joinServer(addr *net.UDPAddr) bool {
 		log.Fatal(err)
 	}
 
-	if msg.Type.Equal(&proto.GameMessage_ErrorMsg{}) {
-		errmsg := &proto.GameMessage_ErrorMsg{}
-		err = errmsg.Unmarshal(b[:read])
-		if err != nil {
-			log.Fatal(err)
-		}
-		println("Connection error:", errmsg.GetErrorMessage())
-		return false
-	} else if msg.Type.Equal(&proto.GameMessage_AckMsg{}) {
-		ackmsg := &proto.GameMessage_AckMsg{}
-		err = ackmsg.Unmarshal(b[:read])
-		if err != nil {
-			log.Fatal(err)
-		}
-		println("Connected:", ackmsg.String())
+	switch message := msg.Type.(type) {
+	case *proto.GameMessage_Ack:
+		println("Ack:", message.Ack.String())
 		return true
-	} else {
+	case *proto.GameMessage_Error:
+		println("Error:", message.Error.GetErrorMessage())
+		return false
+	default:
 		println("Unknown answer")
 		return false
 	}

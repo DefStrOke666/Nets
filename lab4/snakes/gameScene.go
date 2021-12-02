@@ -85,6 +85,7 @@ func NewGameScene(config *proto.GameConfig) *GameScene {
 	scene.updateImages()
 
 	go scene.sendAnnouncement()
+	go scene.processMessages()
 	return scene
 }
 

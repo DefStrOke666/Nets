@@ -90,3 +90,18 @@ func CreateJoinMessage(name string, view bool) *proto.GameMessage_JoinMsg {
 
 	return joinMsg
 }
+
+func CreateAckMessage(seq int64, senderId, receiverId int32) *proto.GameMessage {
+	gameMsh := &proto.GameMessage{
+		MsgSeq:     new(int64),
+		SenderId:   new(int32),
+		ReceiverId: new(int32),
+		Type:       &proto.GameMessage_Ack{},
+	}
+
+	*gameMsh.MsgSeq = seq
+	*gameMsh.SenderId = senderId
+	*gameMsh.ReceiverId = receiverId
+
+	return gameMsh
+}

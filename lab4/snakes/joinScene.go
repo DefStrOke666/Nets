@@ -50,10 +50,6 @@ func NewJoinScene() *JoinScene {
 	return scene
 }
 
-func (j *JoinScene) joinGame() {
-
-}
-
 func (j *JoinScene) createServerImage(w, h int, msg *proto.GameMessage_AnnouncementMsg, backgroundClr color.Color, textClr color.Color) *ebiten.Image {
 	img := ebiten.NewImage(w, h)
 	img.Fill(backgroundClr)
@@ -163,10 +159,18 @@ func (j *JoinScene) updateImages() {
 
 	j.buttonPics[0] = utils.NewPicture(
 		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreIdleColor, utils.LineIdleColor, "Join", utils.GetMenuFonts(4)),
-		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreActiveColor, utils.LineActiveColor, "Join", utils.GetMenuFonts(4)))
+		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreActiveColor, utils.LineActiveColor, "Join", utils.GetMenuFonts(4)),
+	).SetHandler(func() {
+		addr := j.servers[j.selectedServer].Addr
+		j.joinServer(addr, false)
+	})
 	j.buttonPics[1] = utils.NewPicture(
 		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreIdleColor, utils.LineIdleColor, "View", utils.GetMenuFonts(4)),
-		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreActiveColor, utils.LineActiveColor, "View", utils.GetMenuFonts(4)))
+		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreActiveColor, utils.LineActiveColor, "View", utils.GetMenuFonts(4)),
+	).SetHandler(func() {
+		addr := j.servers[j.selectedServer].Addr
+		j.joinServer(addr, true)
+	})
 	j.exitButtonPic = utils.NewPicture(
 		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreIdleColor, utils.LineIdleColor, "Return", utils.GetMenuFonts(4)),
 		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreActiveColor, utils.LineActiveColor, "Return", utils.GetMenuFonts(4)),
