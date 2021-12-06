@@ -5510,12 +5510,12 @@ func (this *GameConfig) String() string {
 	s := strings.Join([]string{
 		`Width:` + valueToStringSnakes(this.Width) + `,`,
 		`Height:` + valueToStringSnakes(this.Height) + `,`,
-		`FoodStatic:` + valueToStringSnakes(this.FoodStatic) + `,`,
-		`FoodPerPlayer:` + valueToStringSnakes(this.FoodPerPlayer) + `,`,
-		`StateDelayMs:` + valueToStringSnakes(this.StateDelayMs) + `,`,
-		`DeadFoodProb:` + valueToStringSnakes(this.DeadFoodProb) + `,`,
-		`PingDelayMs:` + valueToStringSnakes(this.PingDelayMs) + `,`,
-		`NodeTimeoutMs:` + valueToStringSnakes(this.NodeTimeoutMs) + `,`}, "")
+		`Food static:` + valueToStringSnakes(this.FoodStatic) + `,`,
+		`Food per player:` + valueToStringSnakes(this.FoodPerPlayer) + `,`,
+		`State delay ms:` + valueToStringSnakes(this.StateDelayMs) + `,`,
+		`Dead food prob:` + valueToStringSnakes(this.DeadFoodProb) + `,`,
+		`Ping delay ms:` + valueToStringSnakes(this.PingDelayMs) + `,`,
+		`Node timeout ms:` + valueToStringSnakes(this.NodeTimeoutMs) + `,`}, "")
 	return s
 }
 func (this *GamePlayers) String() string {

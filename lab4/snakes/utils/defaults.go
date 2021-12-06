@@ -1,9 +1,52 @@
 package utils
 
 import (
+	"fmt"
 	"github.com/borodun/nsu-nets/lab4/snakes/proto"
+	"github.com/spf13/viper"
+	"log"
 	"math/rand"
 )
+
+type Players struct {
+	AdminName  string
+	PlayerName string
+}
+
+type Game struct {
+	Width         int32
+	Height        int32
+	FoodStatic    int32
+	FoodPerPlayer float32
+	StateDelayMs  int32
+	DeadFoodProb  float32
+	PingDelayMs   int32
+	NodeTimeoutMs int32
+}
+
+type Config struct {
+	Game        Game
+	PlayerNames Players
+}
+
+var Conf Config
+
+func init() {
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("Failed to read config: %v", err)
+	}
+
+	if err := viper.Unmarshal(&Conf); err != nil {
+		log.Fatalf("failed to load: %v", err)
+	}
+
+	fmt.Printf("Config: %+v\n", Conf)
+}
 
 func NewDefaultGameConfig() *proto.GameConfig {
 	conf := &proto.GameConfig{
@@ -16,14 +59,14 @@ func NewDefaultGameConfig() *proto.GameConfig {
 		PingDelayMs:   new(int32),
 		NodeTimeoutMs: new(int32),
 	}
-	*conf.Width = 30
-	*conf.Height = 30
-	*conf.FoodStatic = 5
-	*conf.FoodPerPlayer = 2
-	*conf.StateDelayMs = 100
-	*conf.DeadFoodProb = 0.5
-	*conf.PingDelayMs = 50
-	*conf.NodeTimeoutMs = 1000
+	*conf.Width = Conf.Game.Width
+	*conf.Height = Conf.Game.Height
+	*conf.FoodStatic = Conf.Game.FoodStatic
+	*conf.FoodPerPlayer = Conf.Game.FoodPerPlayer
+	*conf.StateDelayMs = Conf.Game.StateDelayMs
+	*conf.DeadFoodProb = Conf.Game.DeadFoodProb
+	*conf.PingDelayMs = Conf.Game.PingDelayMs
+	*conf.NodeTimeoutMs = Conf.Game.NodeTimeoutMs
 	return conf
 }
 

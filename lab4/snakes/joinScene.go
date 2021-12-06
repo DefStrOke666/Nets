@@ -162,14 +162,16 @@ func (j *JoinScene) updateImages() {
 		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreActiveColor, utils.LineActiveColor, "Join", utils.GetMenuFonts(4)),
 	).SetHandler(func() {
 		addr := j.servers[j.selectedServer].Addr
-		j.joinServer(addr, false)
+		conf := j.servers[j.selectedServer].Config
+		sceneManager.GoTo(NewGameScene(conf, addr, false))
 	})
 	j.buttonPics[1] = utils.NewPicture(
 		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreIdleColor, utils.LineIdleColor, "View", utils.GetMenuFonts(4)),
 		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreActiveColor, utils.LineActiveColor, "View", utils.GetMenuFonts(4)),
 	).SetHandler(func() {
 		addr := j.servers[j.selectedServer].Addr
-		j.joinServer(addr, true)
+		conf := j.servers[j.selectedServer].Config
+		sceneManager.GoTo(NewGameScene(conf, addr, true))
 	})
 	j.exitButtonPic = utils.NewPicture(
 		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreIdleColor, utils.LineIdleColor, "Return", utils.GetMenuFonts(4)),

@@ -74,7 +74,6 @@ func (g *GameScene) moveSnake(snake *proto.GameState_Snake) {
 	pointsLen := len(snake.Points)
 	if dX != newHeadX && dY != newHeadY {
 		if math.Abs(float64(pointX+pointY)) > 1 {
-			//println("Inserting neck")
 			snake.Points = append(snake.Points[:2], snake.Points[1:]...)
 			snake.Points[1] = newPoint
 			pointsLen = len(snake.Points)
@@ -82,7 +81,6 @@ func (g *GameScene) moveSnake(snake *proto.GameState_Snake) {
 			snake.Points[1] = newPoint
 		}
 	} else if pointsLen > 2 {
-		println("Moving neck")
 		if pointX != 0 {
 			*neck.X = MoveFromZero(pointX, 1)
 		} else {
@@ -93,17 +91,15 @@ func (g *GameScene) moveSnake(snake *proto.GameState_Snake) {
 	tail := snake.Points[pointsLen-1]
 	tailX, tailY := int(tail.GetX()), int(tail.GetY())
 
-	//move tail
+	// move tail
 	if pointsLen > 2 {
 		if math.Abs(float64(tailX+tailY)) > 1 {
-			//println("Moving tail")
 			if tailX != 0 {
 				*tail.X = MoveToZero(tailX, 1)
 			} else {
 				*tail.Y = MoveToZero(tailY, 1)
 			}
 		} else {
-			//println("Deleting tail")
 			snake.Points = snake.Points[:pointsLen-1]
 		}
 	}
@@ -248,7 +244,7 @@ func (g *GameScene) eatFood(snake *proto.GameState_Snake, name string) {
 	}
 }
 
-func (g *GameScene) removeSnake(snake *proto.GameState_Snake) {
+func (g *GameScene) removeSnake(snake *proto.GameState_Snake, name string) {
 	index := -1
 	for i, snake2 := range g.state.Snakes {
 		if snake2 == snake {
@@ -257,5 +253,5 @@ func (g *GameScene) removeSnake(snake *proto.GameState_Snake) {
 	}
 	*snake.State = proto.GameState_Snake_ZOMBIE
 	g.state.Snakes = append(g.state.Snakes[:index], g.state.Snakes[index+1:]...)
-	delete(g.playerSnakes, "borodun")
+	delete(g.playerSnakes, name)
 }

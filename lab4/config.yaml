@@ -1,0 +1,12 @@
+Game:
+  Width: 30
+  Height: 30
+  FoodStatic: 5
+  FoodPerPlayer: 2
+  StateDelayMs: 100
+  DeadFoodProb: 0.5
+  PingDelayMs: 50
+  NodeTimeoutMs: 1000
+PlayerNames:
+  AdminName: admin
+  PlayerName: client

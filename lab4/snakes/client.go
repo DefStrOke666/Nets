@@ -56,15 +56,15 @@ func (j *JoinScene) receiveAnnouncements() {
 	}
 }
 
-func (j *JoinScene) joinServer(addr *net.UDPAddr, view bool) bool {
-	joinMsg := utils.CreateJoinMessage("client", view)
+func (g *GameScene) joinServer(addr *net.UDPAddr, view bool) net.Conn {
 	conn, err := net.Dial("udp", addr.String())
 	if err != nil {
 		fmt.Printf("Dial error %v", err)
-		return false
+		return nil
 	}
 	println("Connected to:", conn.RemoteAddr().String())
 
+	joinMsg := utils.CreateJoinMessage(g.playerName, view)
 	marshal, err := joinMsg.Marshal()
 	if err != nil {
 		log.Fatal(err)
@@ -89,12 +89,16 @@ func (j *JoinScene) joinServer(addr *net.UDPAddr, view bool) bool {
 	switch message := msg.Type.(type) {
 	case *proto.GameMessage_Ack:
 		println("Ack:", message.Ack.String())
-		return true
+		return conn
 	case *proto.GameMessage_Error:
 		println("Error:", message.Error.GetErrorMessage())
-		return false
+		return nil
 	default:
 		println("Unknown answer")
-		return false
+		return nil
 	}
+}
+
+func (g *GameScene) sendMessages(conn net.Conn) {
+
 }
