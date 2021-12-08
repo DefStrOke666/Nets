@@ -7,7 +7,7 @@ import (
 	"image"
 	"log"
 	"math"
-	"net"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -26,6 +26,7 @@ type GameScene struct {
 	canJoin      bool
 
 	playerName    string
+	namesById     map[int]string
 	playersByName map[string]*proto.GamePlayer
 	playerSnakes  map[string]*proto.GameState_Snake
 	playerSaveDir map[string]proto.Direction
@@ -42,8 +43,9 @@ type GameScene struct {
 	scoreW    int
 	scoreH    int
 
-	acks []*proto.GameMessage_Ack
-	conn net.Conn
+	acks     []*proto.GameMessage_Ack
+	servAddr string
+	port     string
 
 	buttonPics []*utils.Picture
 	exit       bool
@@ -53,7 +55,7 @@ type GameScene struct {
 	lastUpdate time.Time
 }
 
-func NewGameScene(config *proto.GameConfig, serverAddr *net.UDPAddr, view bool) *GameScene {
+func NewGameScene(config *proto.GameConfig, serverAddr string, view bool) *GameScene {
 	scene := &GameScene{}
 
 	scene.state = new(proto.GameState)
@@ -73,22 +75,26 @@ func NewGameScene(config *proto.GameConfig, serverAddr *net.UDPAddr, view bool) 
 	}
 
 	scene.state.Players = &proto.GamePlayers{}
+	scene.namesById = make(map[int]string)
 	scene.playersByName = make(map[string]*proto.GamePlayer)
 	scene.playerSnakes = make(map[string]*proto.GameState_Snake)
 	scene.playerSaveDir = make(map[string]proto.Direction)
 
+	scene.state.StateOrder = new(int32)
+	*scene.state.StateOrder = 0
+
 	scene.lastUpdate = time.Now()
 	scene.updateImages()
 
-	if serverAddr != nil {
+	if serverAddr != "" {
+		scene.servAddr = serverAddr
 		scene.playerName = utils.Conf.PlayerNames.PlayerName
 		scene.isServer = false
-		conn := scene.joinServer(serverAddr, view)
-		if conn == nil {
-			log.Fatalln("Connection error")
-		} else {
-			scene.conn = conn
+		conn := scene.joinServer(view)
+		if conn == false {
+			log.Fatal("Connection error")
 		}
+		go scene.receiveMessages()
 	} else {
 		scene.playerName = utils.Conf.PlayerNames.AdminName
 		scene.isServer = true
@@ -97,9 +103,12 @@ func NewGameScene(config *proto.GameConfig, serverAddr *net.UDPAddr, view bool) 
 		scene.exit = false
 		scene.addFood(int(config.GetFoodStatic()))
 		scene.maxID = 0
-		scene.addPlayer(scene.playerName, proto.PlayerType_HUMAN, false)
+		port := 10000 + rand.Intn(10000)
+		scene.addPlayer(scene.playerName, proto.PlayerType_HUMAN, false, "", port)
 		go scene.sendAnnouncement()
+		scene.port = strconv.Itoa(port)
 		go scene.processMessages()
+		go scene.sendStateToPlayers()
 	}
 
 	return scene
@@ -194,13 +203,15 @@ func (g *GameScene) Update(state *GameState) error {
 		g.updateImages()
 	}
 
-	if g.isServer {
-		for i := range g.buttonPics {
-			g.buttonPics[i].Update()
-		}
+	for i := range g.buttonPics {
+		g.buttonPics[i].Update()
+	}
 
-		for name, snake := range g.playerSnakes {
-			g.changeSnakeDirection(snake, name)
+	if g.isServer {
+
+		newDir, ok := g.getDir()
+		if ok {
+			g.changeSnakeDirection(g.playerName, newDir)
 		}
 
 		// Update game
@@ -215,7 +226,7 @@ func (g *GameScene) Update(state *GameState) error {
 					}
 					g.fillSnakeCells(snake)
 					if g.checkCollision(snake) {
-						println("Removing snake")
+						println("Removing snake", name)
 						g.makeFoodFromSnake(snake)
 						g.removeSnake(snake, name)
 					}
@@ -228,7 +239,18 @@ func (g *GameScene) Update(state *GameState) error {
 				return err
 			}
 			g.stateChanged = false
-
+			*g.state.StateOrder += 1
+			g.lastUpdate = time.Now()
+		}
+	} else { //TODO
+		g.sendDirection()
+		if time.Now().After(g.lastUpdate.Add(time.Millisecond * time.Duration(g.state.Config.GetStateDelayMs()))) {
+			g.clearSnakeCells()
+			err := g.field.Update(state)
+			if err != nil {
+				return err
+			}
+			g.stateChanged = false
 			g.lastUpdate = time.Now()
 		}
 	}

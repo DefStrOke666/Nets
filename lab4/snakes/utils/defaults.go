@@ -120,6 +120,13 @@ func CreateCoord(x, y int) *proto.GameState_Coord {
 	return coord
 }
 
+func CreateJoin(name string, view bool) *proto.GameMessage_Join {
+	joinMsg := CreateJoinMessage(name, view)
+	join := &proto.GameMessage_Join{Join: joinMsg}
+
+	return join
+}
+
 func CreateJoinMessage(name string, view bool) *proto.GameMessage_JoinMsg {
 	joinMsg := &proto.GameMessage_JoinMsg{
 		PlayerType: new(proto.PlayerType),
@@ -134,12 +141,11 @@ func CreateJoinMessage(name string, view bool) *proto.GameMessage_JoinMsg {
 	return joinMsg
 }
 
-func CreateAckMessage(seq int64, senderId, receiverId int32) *proto.GameMessage {
+func CreateGameMessage(seq int64, senderId, receiverId int32) *proto.GameMessage {
 	gameMsh := &proto.GameMessage{
 		MsgSeq:     new(int64),
 		SenderId:   new(int32),
 		ReceiverId: new(int32),
-		Type:       &proto.GameMessage_Ack{},
 	}
 
 	*gameMsh.MsgSeq = seq

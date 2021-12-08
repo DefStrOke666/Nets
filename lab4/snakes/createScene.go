@@ -90,7 +90,7 @@ func (c *CreateScene) updateImages() {
 		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreIdleColor, utils.LineIdleColor, "Start", utils.GetMenuFonts(4)),
 		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreActiveColor, utils.LineActiveColor, "Start", utils.GetMenuFonts(4)),
 	).SetHandler(func() {
-		sceneManager.GoTo(NewGameScene(c.config, nil, false))
+		sceneManager.GoTo(NewGameScene(c.config, "", false))
 	})
 	c.buttonPics[1] = utils.NewPicture(
 		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreIdleColor, utils.LineIdleColor, "Return", utils.GetMenuFonts(4)),

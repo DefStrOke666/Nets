@@ -8,22 +8,37 @@ import (
 	"math/rand"
 )
 
-func (g *GameScene) changeSnakeDirection(snake *proto.GameState_Snake, name string) {
-	direction := g.playerSaveDir[name]
+func (g *GameScene) getDir() (proto.Direction, bool) {
 	if ebiten.IsKeyPressed(ebiten.KeyArrowUp) {
-		if !(direction == proto.Direction_UP || direction == proto.Direction_DOWN) {
+		return proto.Direction_UP, true
+	} else if ebiten.IsKeyPressed(ebiten.KeyArrowDown) {
+		return proto.Direction_DOWN, true
+	} else if ebiten.IsKeyPressed(ebiten.KeyArrowRight) {
+		return proto.Direction_RIGHT, true
+	} else if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) {
+		return proto.Direction_LEFT, true
+	}
+	return proto.Direction_UP, false
+}
+
+func (g *GameScene) changeSnakeDirection(name string, newDir proto.Direction) {
+	snake := g.playerSnakes[name]
+	oldDir := g.playerSaveDir[name]
+	switch newDir {
+	case proto.Direction_UP:
+		if !(oldDir == proto.Direction_UP || oldDir == proto.Direction_DOWN) {
 			*snake.HeadDirection = proto.Direction_UP
 		}
-	} else if ebiten.IsKeyPressed(ebiten.KeyArrowDown) {
-		if !(direction == proto.Direction_UP || direction == proto.Direction_DOWN) {
+	case proto.Direction_DOWN:
+		if !(oldDir == proto.Direction_UP || oldDir == proto.Direction_DOWN) {
 			*snake.HeadDirection = proto.Direction_DOWN
 		}
-	} else if ebiten.IsKeyPressed(ebiten.KeyArrowRight) {
-		if !(direction == proto.Direction_RIGHT || direction == proto.Direction_LEFT) {
+	case proto.Direction_RIGHT:
+		if !(oldDir == proto.Direction_RIGHT || oldDir == proto.Direction_LEFT) {
 			*snake.HeadDirection = proto.Direction_RIGHT
 		}
-	} else if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) {
-		if !(direction == proto.Direction_RIGHT || direction == proto.Direction_LEFT) {
+	case proto.Direction_LEFT:
+		if !(oldDir == proto.Direction_RIGHT || oldDir == proto.Direction_LEFT) {
 			*snake.HeadDirection = proto.Direction_LEFT
 		}
 	}

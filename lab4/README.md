@@ -3,3 +3,5 @@
 make snakes
 make run
 ```
+
+## Images

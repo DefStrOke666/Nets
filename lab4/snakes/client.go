@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"github.com/borodun/nsu-nets/lab4/snakes/proto"
 	"github.com/borodun/nsu-nets/lab4/snakes/utils"
+	"github.com/hajimehoshi/ebiten/v2"
 	"log"
 	"net"
+	"strings"
+	"time"
 )
 
 func (j *JoinScene) receiveAnnouncements() {
@@ -44,7 +47,6 @@ func (j *JoinScene) receiveAnnouncements() {
 			}
 		}
 		if !serverExists {
-			msg.Addr = addr
 			j.servers = append(j.servers, msg)
 			j.serversUpdated = true
 		}
@@ -56,19 +58,31 @@ func (j *JoinScene) receiveAnnouncements() {
 	}
 }
 
-func (g *GameScene) joinServer(addr *net.UDPAddr, view bool) net.Conn {
-	conn, err := net.Dial("udp", addr.String())
+func (g *GameScene) joinServer(view bool) bool {
+	conn, err := net.Dial("udp", g.servAddr)
 	if err != nil {
 		fmt.Printf("Dial error %v", err)
-		return nil
+		return false
 	}
-	println("Connected to:", conn.RemoteAddr().String())
+	println("Connected to:", conn.RemoteAddr().String(), " server addr:", g.servAddr)
 
-	joinMsg := utils.CreateJoinMessage(g.playerName, view)
-	marshal, err := joinMsg.Marshal()
+	defer func(conn net.Conn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal("Conn close:", err)
+		}
+	}(conn)
+
+	g.port = strings.Split(conn.LocalAddr().String(), ":")[1]
+	println("My port:", g.port)
+
+	gamemsg := utils.CreateGameMessage(1, 2, 1)
+	gamemsg.Type = utils.CreateJoin(g.playerName, view)
+	marshal, err := gamemsg.Marshal()
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	_, err = conn.Write(marshal)
 	if err != nil {
 		log.Fatal("Write failed:", err)
@@ -89,16 +103,105 @@ func (g *GameScene) joinServer(addr *net.UDPAddr, view bool) net.Conn {
 	switch message := msg.Type.(type) {
 	case *proto.GameMessage_Ack:
 		println("Ack:", message.Ack.String())
-		return conn
+		return true
 	case *proto.GameMessage_Error:
 		println("Error:", message.Error.GetErrorMessage())
-		return nil
+		return false
 	default:
 		println("Unknown answer")
-		return nil
+		return false
 	}
 }
 
-func (g *GameScene) sendMessages(conn net.Conn) {
+func (g *GameScene) receiveMessages() {
+	servAddr, err := net.ResolveUDPAddr("udp", "127.0.0.1:"+g.port)
+	if err != nil {
+		log.Fatal(err)
+	}
+	conn, err := net.ListenUDP("udp", servAddr)
+	if err != nil {
+		log.Fatal("ListenUDP:", err)
+	}
+	err = conn.SetReadBuffer(maxDatagramSize)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	b := make([]byte, maxDatagramSize)
+	println("Listening for messages on:", servAddr.String())
+	for {
+		time.Sleep(10 * time.Millisecond)
+		read, _, err := conn.ReadFromUDP(b)
+		if err != nil {
+			log.Print("ReadFromUDP failed:", err)
+			continue
+		}
+		//println("Connection from:", addr.String())
+
+		message := &proto.GameMessage{}
+		err = message.Unmarshal(b[:read])
+		if err != nil {
+			log.Print("Unmarshall error:", err)
+			continue
+		}
+
+		switch msg := message.Type.(type) {
+		case *proto.GameMessage_State:
+			//println("State from addr:", addr.String())
+			state := msg.State
+			if g.state.GetStateOrder() < state.State.GetStateOrder() {
+				g.state = state.State
+				//println("State:", state.String())
+				g.drawScore()
+			} else {
+				println("No new state")
+			}
+			continue
+		}
+
+		if g.exit {
+			println("Stopped listening for messages")
+			return
+		}
+		time.Sleep(time.Millisecond * time.Duration(g.state.Config.GetStateDelayMs()))
+	}
+}
+
+func (g *GameScene) sendDirection() {
+	direction := proto.Direction(0)
+	if ebiten.IsKeyPressed(ebiten.KeyArrowUp) {
+		direction = proto.Direction_UP
+	} else if ebiten.IsKeyPressed(ebiten.KeyArrowDown) {
+		direction = proto.Direction_DOWN
+	} else if ebiten.IsKeyPressed(ebiten.KeyArrowRight) {
+		direction = proto.Direction_RIGHT
+	} else if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) {
+		direction = proto.Direction_LEFT
+	}
+
+	conn, err := net.Dial("udp", g.servAddr)
+	if err != nil {
+		fmt.Printf("Dial error %v", err)
+		return
+	}
+	println("Connected to:", conn.RemoteAddr().String())
+
+	defer func(conn net.Conn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal("Conn close:", err)
+		}
+	}(conn)
+
+	gamemsg := utils.CreateGameMessage(1, 2, 1)
+	gamemsg.Type = &proto.GameMessage_Steer{Steer: &proto.GameMessage_SteerMsg{Direction: &direction}}
+	marshal, err := gamemsg.Marshal()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = conn.Write(marshal)
+	if err != nil {
+		log.Fatal("Write failed:", err)
+	}
 }

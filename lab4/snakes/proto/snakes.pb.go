@@ -13,7 +13,6 @@ import (
 	io "io"
 	math "math"
 	math_bits "math/bits"
-	"net"
 	reflect "reflect"
 	strings "strings"
 )
@@ -1046,10 +1045,9 @@ type GameMessage_AnnouncementMsg struct {
 	Players              *GamePlayers `protobuf:"bytes,1,req,name=players" json:"players,omitempty"`
 	Config               *GameConfig  `protobuf:"bytes,2,req,name=config" json:"config,omitempty"`
 	CanJoin              *bool        `protobuf:"varint,3,opt,name=can_join,json=canJoin,def=1" json:"can_join,omitempty"`
-	Addr                 *net.UDPAddr
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
 }
 
 func (m *GameMessage_AnnouncementMsg) Reset()      { *m = GameMessage_AnnouncementMsg{} }

@@ -61,7 +61,8 @@ func (j *JoinScene) createServerImage(w, h int, msg *proto.GameMessage_Announcem
 	if *msg.CanJoin {
 		str = "Can join"
 	}
-	canJoinImg := utils.CreateStringImage(str, utils.GetMenuFonts(3), textClr)
+	str2 := str + "  " + strconv.Itoa(len(msg.Players.Players)) + " players"
+	canJoinImg := utils.CreateStringImage(str2, utils.GetMenuFonts(3), textClr)
 
 	op := &ebiten.DrawImageOptions{}
 	Margin := int(utils.Margin)
@@ -161,16 +162,20 @@ func (j *JoinScene) updateImages() {
 		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreIdleColor, utils.LineIdleColor, "Join", utils.GetMenuFonts(4)),
 		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreActiveColor, utils.LineActiveColor, "Join", utils.GetMenuFonts(4)),
 	).SetHandler(func() {
-		addr := j.servers[j.selectedServer].Addr
+		admin := j.servers[j.selectedServer].Players.Players[0]
+		addr := admin.GetIpAddress() + ":" + strconv.Itoa(int(admin.GetPort()))
 		conf := j.servers[j.selectedServer].Config
+		j.exit = true
 		sceneManager.GoTo(NewGameScene(conf, addr, false))
 	})
 	j.buttonPics[1] = utils.NewPicture(
 		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreIdleColor, utils.LineIdleColor, "View", utils.GetMenuFonts(4)),
 		utils.BorderedRoundRectWithText(buttonW, buttonH, utils.CentreActiveColor, utils.LineActiveColor, "View", utils.GetMenuFonts(4)),
 	).SetHandler(func() {
-		addr := j.servers[j.selectedServer].Addr
+		admin := j.servers[j.selectedServer].Players.Players[0]
+		addr := admin.GetIpAddress() + ":" + strconv.Itoa(int(admin.GetPort()))
 		conf := j.servers[j.selectedServer].Config
+		j.exit = true
 		sceneManager.GoTo(NewGameScene(conf, addr, true))
 	})
 	j.exitButtonPic = utils.NewPicture(

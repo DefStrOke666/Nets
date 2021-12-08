@@ -1,11 +1,14 @@
 package snakes
 
 import (
+	"fmt"
 	"github.com/borodun/nsu-nets/lab4/snakes/proto"
 	"github.com/borodun/nsu-nets/lab4/snakes/utils"
 	"log"
 	"math/rand"
 	"net"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -41,13 +44,13 @@ func (g *GameScene) sendAnnouncement() {
 }
 
 func (g *GameScene) processMessages() {
-	servAddr, err := net.ResolveUDPAddr("udp", "")
+	servAddr, err := net.ResolveUDPAddr("udp", "127.0.0.1:"+g.port)
 	if err != nil {
 		log.Fatal(err)
 	}
 	conn, err := net.ListenUDP("udp", servAddr)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("ListenUDP:", err)
 	}
 	err = conn.SetReadBuffer(maxDatagramSize)
 	if err != nil {
@@ -61,31 +64,48 @@ func (g *GameScene) processMessages() {
 		read, addr, err := conn.ReadFromUDP(b)
 		if err != nil {
 			log.Print("ReadFromUDP failed:", err)
+			continue
 		}
 		println("Connection from:", addr.String())
 
 		message := &proto.GameMessage{}
 		err = message.Unmarshal(b[:read])
 		if err != nil {
-			log.Print(err)
+			log.Print("Unmarshall error:", err)
+			continue
 		}
 
 		switch msg := message.Type.(type) {
 		case *proto.GameMessage_Join:
 			println("Join from addr:", addr.String())
-			ack := msg.Join
-			println("Ack:", ack.String())
-			g.addPlayer(ack.GetName(), ack.GetPlayerType(), ack.GetOnlyView())
-			answer := utils.CreateAckMessage(message.GetMsgSeq(), message.GetSenderId(), message.GetReceiverId())
+			join := msg.Join
+			println("Join:", join.String())
+			clientAddr := strings.Split(addr.String(), ":")
+			ip := clientAddr[0]
+			port, _ := strconv.Atoi(clientAddr[1])
+			println("Client port:", port)
+			g.addPlayer(join.GetName(), join.GetPlayerType(), join.GetOnlyView(), ip, port)
+			g.namesById[int(message.GetSenderId())] = join.GetName()
+
+			answer := utils.CreateGameMessage(1, 1, 2)
+			answer.Type = &proto.GameMessage_Ack{Ack: &proto.GameMessage_AckMsg{}}
 			marshaledAnswer, err := answer.Marshal()
 			if err != nil {
-				log.Print(err)
+				log.Print("marshall error:", err)
+				continue
 			}
-			_, err = conn.Write(marshaledAnswer)
+			_, err = conn.WriteTo(marshaledAnswer, addr)
 			if err != nil {
-				log.Print(err)
+				log.Print("Write error:", err)
+				continue
 			}
 			continue
+		case *proto.GameMessage_Steer:
+			println("Steer from addr:", addr.String())
+			steer := msg.Steer
+			println("Steer:", steer.String())
+			name := g.namesById[int(message.GetSenderId())]
+			g.changeSnakeDirection(name, steer.GetDirection())
 		}
 
 		if g.exit {
@@ -95,9 +115,44 @@ func (g *GameScene) processMessages() {
 	}
 }
 
-func (g *GameScene) addPlayer(name string, pType proto.PlayerType, view bool) {
+func (g *GameScene) sendStateToPlayers() {
+	for {
+		for _, player := range g.state.Players.GetPlayers() {
+			if player.GetIpAddress() != "" {
+				addr := player.GetIpAddress() + ":" + strconv.Itoa(int(player.GetPort()))
+				conn, err := net.Dial("udp", addr)
+				if err != nil {
+					fmt.Printf("Dial error %v", err)
+					return
+				}
+
+				gamemsg := utils.CreateGameMessage(1, 1, 2)
+				gamemsg.Type = &proto.GameMessage_State{State: &proto.GameMessage_StateMsg{State: g.state}}
+				marshal, err := gamemsg.Marshal()
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				_, err = conn.Write(marshal)
+				if err != nil {
+					log.Fatal("Write failed:", err)
+				}
+
+				err = conn.Close()
+				if err != nil {
+					log.Fatal("Close failed:", err)
+				}
+			}
+		}
+		time.Sleep(time.Millisecond * time.Duration(g.state.Config.GetStateDelayMs()))
+	}
+}
+
+func (g *GameScene) addPlayer(name string, pType proto.PlayerType, view bool, ip string, port int) {
 	player := utils.CreatePlayer(name)
 	*player.Type = pType
+	*player.Port = int32(port)
+	*player.IpAddress = ip
 	if view {
 		*player.Role = proto.NodeRole_VIEWER
 	}
