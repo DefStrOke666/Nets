@@ -28,21 +28,21 @@ func NewTitleScene() *TitleScene {
 		utils.CreateStringImage("SNAKES", utils.GetMenuFonts(8), utils.TitleIdleColor),
 		utils.CreateStringImage("SNAKES", utils.GetMenuFonts(8), utils.TitleActiveColor))
 	scene.pics[1] = utils.NewPicture(
-		utils.CreateStringImage("Create", utils.GetArcadeFonts(8), utils.IdleColor),
-		utils.CreateStringImage("Create", utils.GetArcadeFonts(8), utils.ActiveColor),
+		utils.CreateStringImage("Create", utils.GetArcadeFonts(8), utils.MenuTextIdleColor),
+		utils.CreateStringImage("Create", utils.GetArcadeFonts(8), utils.MenuTextActiveColor),
 	).SetHandler(func() {
 		sceneManager.GoTo(NewCreateScene())
 	})
 	scene.pics[2] = utils.NewPicture(
-		utils.CreateStringImage("Join", utils.GetArcadeFonts(8), utils.IdleColor),
-		utils.CreateStringImage("Join", utils.GetArcadeFonts(8), utils.ActiveColor),
+		utils.CreateStringImage("Join", utils.GetArcadeFonts(8), utils.MenuTextIdleColor),
+		utils.CreateStringImage("Join", utils.GetArcadeFonts(8), utils.MenuTextActiveColor),
 	).SetHandler(func() {
 		println("server list")
 		sceneManager.GoTo(NewJoinScene())
 	})
 	scene.pics[3] = utils.NewPicture(
-		utils.CreateStringImage("Exit", utils.GetArcadeFonts(8), utils.IdleColor),
-		utils.CreateStringImage("Exit", utils.GetArcadeFonts(8), utils.ActiveColor),
+		utils.CreateStringImage("Exit", utils.GetArcadeFonts(8), utils.MenuTextIdleColor),
+		utils.CreateStringImage("Exit", utils.GetArcadeFonts(8), utils.MenuTextActiveColor),
 	).SetHandler(func() {
 		println("exit")
 		closeWindow = true

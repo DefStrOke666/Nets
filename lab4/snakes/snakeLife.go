@@ -24,6 +24,9 @@ func (g *GameScene) getDir() (proto.Direction, bool) {
 func (g *GameScene) changeSnakeDirection(name string, newDir proto.Direction) {
 	snake := g.playerSnakes[name]
 	oldDir := g.playerSaveDir[name]
+	if snake == nil {
+		return
+	}
 	switch newDir {
 	case proto.Direction_UP:
 		if !(oldDir == proto.Direction_UP || oldDir == proto.Direction_DOWN) {

@@ -2,7 +2,9 @@ package snakes
 
 import (
 	"errors"
+	"github.com/fogleman/gg"
 	"github.com/hajimehoshi/ebiten/v2"
+	"image"
 	"log"
 )
 
@@ -50,6 +52,14 @@ func Play() {
 	ebiten.SetWindowSize(screenWidth, screenHeight)
 	ebiten.SetWindowTitle("Snakes")
 	ebiten.SetWindowResizable(true)
+
+	img, err := gg.LoadImage("assets/snake_icon.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+	imgs := make([]image.Image, 1)
+	imgs[0] = img
+	ebiten.SetWindowIcon(imgs)
 
 	if err := ebiten.RunGame(&Game{}); err != nil {
 		log.Fatal(err)

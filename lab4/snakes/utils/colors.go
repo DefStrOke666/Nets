@@ -6,39 +6,39 @@ import (
 )
 
 var (
-	FillColor = ParseHexColor("2A0944")
+	FillColor = ParseHexColor("FCF8E8")
 
-	BackgroundColor = ParseHexColor("170055")
+	BackgroundColor = ParseHexColor("F9F3DF")
 
-	CentreIdleColor   = ParseHexColor("C9CCD5")
-	CentreActiveColor = ParseHexColor("FFE3E3")
-	LineIdleColor     = ParseHexColor("FF5C58")
-	LineActiveColor   = ParseHexColor("FDB827")
+	CentreIdleColor   = ParseHexColor("FFF4E4")
+	CentreActiveColor = ParseHexColor("FFF4E4")
+	LineIdleColor     = ParseHexColor("AACDBE")
+	LineActiveColor   = ParseHexColor("FF7657")
 
-	TitleIdleColor   = ParseHexColor("FFB319")
-	TitleActiveColor = ParseHexColor("E63E6D")
-	IdleColor        = ParseHexColor("80ED99")
-	ActiveColor      = ParseHexColor("FF7777")
+	TitleIdleColor      = ParseHexColor("A2D0C1")
+	TitleActiveColor    = ParseHexColor("EB5033")
+	MenuTextIdleColor   = ParseHexColor("2C2E43")
+	MenuTextActiveColor = ParseHexColor("36C186")
 
-	ServerBackgroundIdleColor   = ParseHexColor("082032")
-	ServerBackgroundActiveColor = ParseHexColor("334756")
-	ServerTextIdleColor         = ParseHexColor("FFF8E5")
-	ServerTextActiveColor       = ParseHexColor("FF4C29")
+	ServerBackgroundIdleColor   = ParseHexColor("FFF4E4")
+	ServerBackgroundActiveColor = ParseHexColor("FFF4E4")
+	ServerTextIdleColor         = ParseHexColor("F69E7B")
+	ServerTextActiveColor       = ParseHexColor("FA7D09")
 
-	ScoreCentreColor = ParseHexColor("142F43")
-	ScoreLineColor   = ParseHexColor("FFAB4C")
-	ScoreTextColor   = ParseHexColor("99FEFF")
+	ScoreCentreColor = ParseHexColor("F6EDCF")
+	ScoreLineColor   = ParseHexColor("FDD365")
+	ScoreTextColor   = ParseHexColor("EB4D55")
 
-	ConfigCentreColor = ParseHexColor("142F43")
-	ConfigLineColor   = ParseHexColor("FFAB4C")
-	ConfigTextColor   = ParseHexColor("99FEFF")
+	ConfigCentreColor = ParseHexColor("F6EDCF")
+	ConfigLineColor   = ParseHexColor("FDD365")
+	ConfigTextColor   = ParseHexColor("EB4D55")
 
-	FieldCellColor1 = ParseHexColor("FFD56B")
-	FieldCellColor2 = ParseHexColor("FFB26B")
+	FieldCellColor1 = ParseHexColor("BFD8B8")
+	FieldCellColor2 = ParseHexColor("E7EAB5")
 
-	FoodColor       = ParseHexColor("E02401")
-	SnakeBodyColor1 = ParseHexColor("FF8243")
-	SnakeHeadColor1 = ParseHexColor("E26A2C")
+	FoodColor       = ParseHexColor("D34848")
+	SnakeBodyColor1 = ParseHexColor("FEA82F")
+	SnakeHeadColor1 = ParseHexColor("FF6701")
 )
 
 func ParseHexColor(s string) color.RGBA {
