@@ -1,17 +1,120 @@
 #include "proxy.h"
 
-static void removeFromPoll(std::vector<pollfd>::iterator *it) {
+Proxy::Proxy(int port) {
+    signal(SIGPIPE, SIG_IGN);
+    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    pollDescryptors = new std::vector<pollfd>;
+    transferMap = new std::unordered_map<pollfd *, pollfd *>;
+    dataPieces = new std::unordered_map<pollfd *, std::vector<char> >;
+
+    int opt = 1;
+    setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    if (serverSocket == -1) {
+        throw proxyException("Can't open server socket!");
+    }
+
+    serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(port);
+
+    if (bind(serverSocket, (sockaddr *) &serverAddr, sizeof(serverAddr))) {
+        throw proxyException("Can't bind server socket!");
+    }
+
+    if (listen(serverSocket, MAX_CONNECTIONS)) {
+        throw proxyException("Can't listen this socket!");
+    }
+
+    if (fcntl(serverSocket, F_SETFL, fcntl(serverSocket, F_GETFL, 0) | O_NONBLOCK) == -1) {
+        throw proxyException("Can't make server socket nonblock!");
+    }
+
+    pollfd server{};
+    server.fd = serverSocket;
+    server.events = POLLIN;
+    pollDescryptors->reserve(MAX_CONNECTIONS);
+    pollDescryptors->push_back(server);
+
+    supportedAddressTypes.insert(IPv4_ADDRESS);
+    supportedAddressTypes.insert(IPv6_ADDRESS);
+    supportedAddressTypes.insert(DOMAIN_NAME);
+
+    setupDNSSignal();
+}
+
+Proxy::~Proxy() {
+    close(dnsSignal);
+    close(serverSocket);
+    delete this->transferMap;
+    delete this->pollDescryptors;
+}
+
+void Proxy::run() {
+    std::cerr << "Started accepting connections" << std::endl;
+    while (true) {
+        try {
+            pollManage();
+        } catch (proxyException &e) {
+            std::cerr << "Exception: " << e.what() << std::endl;
+        }
+    }
+}
+
+void Proxy::removeFromPoll(std::vector<pollfd>::iterator *it) {
     if (close((*it)->fd)) {
         throw proxyException("close");
     }
     (*it)->fd = -(*it)->fd;
 }
 
+void Proxy::pollManage() {
+    pollfd c{};
+    c.fd = -1;
+    c.events = POLLIN;
+    c.revents = 0;
+
+    poll(pollDescryptors->data(), pollDescryptors->size(), POLL_DELAY);
+
+    for (auto it = pollDescryptors->begin(); it != pollDescryptors->end(); ++it) {
+        if (it->fd > 0) {
+            if (it->revents & POLLERR) {
+                removeFromPoll(&it);
+            } else if (it->revents & POLLOUT) {
+                sendData(&it);
+            } else if (it->revents & POLLIN) {
+                if (it->fd == serverSocket) {
+                    std::cerr << "Accepting connection" << std::endl;
+                    acceptConnection(&c);
+                } else if (it->fd == dnsSignal) {
+                    std::cerr << "DNS resolved" << std::endl;
+                    getResolveResult(&it);
+                } else if (passedFullSOCKSprotocol.count(&*it)) {
+                    readData(&it);
+                } else if (passedHandshake.count(&*it)) {
+                    std::cerr << "auth" << std::endl;
+                    passIdentification(&it);
+                    std::cerr << "pass" << std::endl;
+                } else {
+                    std::cerr << "handshake" << std::endl;
+                    handshake(&it);
+                }
+            }
+        }
+    }
+
+    if (c.fd != -1) {
+        pollDescryptors->push_back(c);
+    }
+
+    if (!waitedCounter) {
+        removeDeadDescriptors();
+    }
+}
+
 void Proxy::passIdentification(std::vector<pollfd>::iterator *clientIterator) {
     pollfd *client = &**clientIterator;
     std::fill(buffer, buffer + BUFFER_LENGTH, 0);
     auto read = recv(client->fd, buffer, BUFFER_LENGTH, 0);
-    std::cout << "read in id " << read << std::endl;
 
     if (!checkSOCKSRequest(client->fd, read)) {
         removeFromPoll(clientIterator);
@@ -34,12 +137,12 @@ void Proxy::passIdentification(std::vector<pollfd>::iterator *clientIterator) {
     }
 }
 
-void Proxy::makeHandshake(std::vector<pollfd>::iterator *clientIterator) {
+void Proxy::handshake(std::vector<pollfd>::iterator *clientIterator) {
     pollfd *fd = &**clientIterator;
     auto read = recv(fd->fd, buffer, BUFFER_LENGTH, 0);
     buffer[read] = 0;
 
-    char response[2] = {SOCKS_VERSION, INVALID_AUTHORISATION};
+    char response[2] = {SOCKS_VERSION, char(INVALID_AUTHORISATION)};
     if (buffer[0] != SOCKS_VERSION) {
         send(fd->fd, response, HANDSHAKE_LENGTH, 0);
         removeFromPoll(clientIterator);
@@ -49,7 +152,6 @@ void Proxy::makeHandshake(std::vector<pollfd>::iterator *clientIterator) {
     int availableAuthorisations = buffer[1];
     for (int j = 0, i = 2; j < availableAuthorisations; ++i, ++j) {
         if (buffer[i] == SUPPORTED_AUTHORISATION) {
-            std::cout << "supported auto! " << std::endl;
             response[1] = SUPPORTED_AUTHORISATION;
         }
     }
@@ -65,14 +167,12 @@ void Proxy::makeHandshake(std::vector<pollfd>::iterator *clientIterator) {
 void Proxy::acceptConnection(pollfd *client) {
     size_t addSize = sizeof(addr);
     int newClient = accept(serverSocket, (sockaddr *) &addr, (socklen_t *) &addSize);
-
-    std::cout << "I ACCEPTED NEW CLIENT AND FD IS " << newClient << " "
-              << inet_ntoa(addr.sin_addr) << " " << addr.sin_port << std::endl;
-
     if (newClient == -1) {
-        throw std::runtime_error("can't accept!");
+        throw proxyException("accept");
     }
 
+    std::cerr << "New connection fd: " << newClient << ", addr:"
+              << inet_ntoa(addr.sin_addr) << ":" << addr.sin_port << std::endl;
     client->fd = newClient;
 }
 
@@ -92,86 +192,17 @@ void Proxy::sendData(std::vector<pollfd>::iterator *clientIterator) {
         (*dataPieces)[client].erase((*dataPieces)[client].begin(), (*dataPieces)[client].begin() + sent);
     }
     dataPieces->erase(client);
-    for (auto it = pollDescryptors->begin(); it != pollDescryptors->end();) {
-        if (&*it == client) {
-            it->events ^= POLLOUT;
+    for (auto &pollDescryptor: *pollDescryptors) {
+        if (&pollDescryptor == client) {
+            pollDescryptor.events ^= POLLOUT;
             return;
-        } else {
-            ++it;
         }
     }
-}
-
-Proxy::Proxy(int port) {
-    init(port);
-}
-
-void Proxy::run() {
-    std::cout << "Started accepting connections" << std::endl;
-    while (true) {
-        try {
-            pollManage();
-        } catch (std::exception &e) {
-            std::cerr << "Exception: " << e.what() << std::endl;
-        }
-    }
-}
-
-void Proxy::pollManage() {
-    pollfd c{};
-    c.fd = -1;
-    c.events = POLLIN;
-    c.revents = 0;
-
-    poll(pollDescryptors->data(), pollDescryptors->size(), POLL_DELAY);
-
-    for (auto it = pollDescryptors->begin(); it != pollDescryptors->end(); ++it) {
-        if (it->fd > 0) {
-            if (it->revents & POLLERR) {
-                removeFromPoll(&it);
-                std::cout << "REFUSED" << std::endl;
-            } else if (it->revents & POLLOUT) {
-                sendData(&it);
-            } else if (it->revents & POLLIN) {
-                if (it->fd == serverSocket) {
-                    std::cout << "Accepting connection " << std::endl;
-                    acceptConnection(&c);
-                } else if (it->fd == dnsSignal) {
-                    std::cout << "DNS resolved" << std::endl;
-                    getResolveResult(&it);
-                } else if (passedFullSOCKSprotocol.count(&*it)) {
-                    readData(&it);
-                } else if (passedHandshake.count(&*it)) {
-                    std::cout << "socks authorise " << std::endl;
-                    passIdentification(&it);
-                    std::cout << "pass" << std::endl;
-                } else {
-                    std::cout << "making handshake! " << std::endl;
-                    makeHandshake(&it);
-                }
-            }
-        }
-    }
-
-    if (c.fd != -1) {
-        pollDescryptors->push_back(c);
-    }
-
-    if (!waitedCounter) {
-        removeDeadDescriptors();
-    }
-}
-
-Proxy::~Proxy() {
-    close(dnsSignal);
-    close(serverSocket);
-    delete this->transferMap;
-    delete this->pollDescryptors;
 }
 
 void Proxy::removeDeadDescriptors() {
     auto npollDescriptor = new std::vector<pollfd>;
-    npollDescriptor->reserve(MAX_CLIENTS);
+    npollDescriptor->reserve(MAX_CONNECTIONS);
 
     auto ntransferPipes = new std::unordered_map<pollfd *, pollfd *>;
     auto ndataPieces = new std::unordered_map<pollfd *, std::vector<char> >;
@@ -195,18 +226,21 @@ void Proxy::removeDeadDescriptors() {
     }
 
     for (const auto &handshake: passedHandshake) {
-        if (handshake->fd > 0)
+        if (handshake->fd > 0) {
             newPassedHandshake.insert(oldNewMap[handshake]);
+        }
     }
 
     for (const auto &sock: passedFullSOCKSprotocol) {
-        if (sock->fd > 0)
+        if (sock->fd > 0) {
             newPassedSocks.insert(oldNewMap[sock]);
+        }
     }
 
     for (auto &dataPiece: *dataPieces) {
-        if (dataPiece.first->fd > 0)
+        if (dataPiece.first->fd > 0) {
             (*ndataPieces)[oldNewMap[dataPiece.first]] = dataPiece.second;
+        }
     }
 
     dataPieces->swap(*ndataPieces);
@@ -222,51 +256,9 @@ void Proxy::removeDeadDescriptors() {
     passedHandshake.swap(newPassedHandshake);
 }
 
-void Proxy::init(int port) {
-    signal(SIGPIPE, SIG_IGN);
-    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    pollDescryptors = new std::vector<pollfd>;
-    transferMap = new std::unordered_map<pollfd *, pollfd *>;
-    dataPieces = new std::unordered_map<pollfd *, std::vector<char> >;
-
-    int opt = 1;
-    setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    if (serverSocket == -1) {
-        throw std::runtime_error("Can't open server socket!");
-    }
-
-    serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(port);
-
-    if (bind(serverSocket, (sockaddr *) &serverAddr, sizeof(serverAddr))) {
-        throw std::runtime_error("Can't bind server socket!");
-    }
-
-    if (listen(serverSocket, MAX_CLIENTS)) {
-        throw std::runtime_error("Can't listen this socket!");
-    }
-
-    if (fcntl(serverSocket, F_SETFL, fcntl(serverSocket, F_GETFL, 0) | O_NONBLOCK) == -1) {
-        throw std::runtime_error("Can't make server socket nonblock!");
-    }
-
-    pollfd server{};
-    server.fd = serverSocket;
-    server.events = POLLIN;
-    pollDescryptors->reserve(MAX_CLIENTS);
-    pollDescryptors->push_back(server);
-
-    supportedAddressTypes.insert(IPv4_ADDRESS);
-    supportedAddressTypes.insert(IPv6_ADDRESS);
-    supportedAddressTypes.insert(DOMAIN_NAME);
-
-    setupDnsSignal();
-}
-
 void Proxy::printSocksBuffer(int size) {
     for (int i = 0; i < size; ++i) {
-        std::cout << i << " " << (int) buffer[i] << std::endl;
+        std::cerr << i << " " << (int) buffer[i] << std::endl;
     }
 }
 
@@ -284,7 +276,7 @@ bool Proxy::checkSOCKSRequest(int client, ssize_t len) {
     if (socksVersion != SOCKS_VERSION) {
         char notSupported[] = {SOCKS_VERSION, PROTOCOL_ERROR, 0};
         send(client, notSupported, sizeof(notSupported), 0);
-        std::cerr << "invalid socks request!" << std::endl;
+        std::cerr << "Invalid socks request!" << std::endl;
         return false;
     }
     if (!supportedAddressTypes.count(addrType)) {
@@ -321,16 +313,14 @@ void Proxy::readData(std::vector<pollfd>::iterator *clientIterator) {
 
     while (true) {
         auto read = recv(client->fd, buffer, BUFFER_LENGTH - 1, 0);
-        std::cout << "i read " << read << std::endl;
-        std::cout << buffer << std::endl;
         if (!read or (read == -1 and errno != EWOULDBLOCK)) {
-            registerForWrite(to);
+            to->events |= POLLOUT;
             removeFromPoll(clientIterator);
             return;
         }
         if (errno == EWOULDBLOCK) {
             errno = EXIT_SUCCESS;
-            registerForWrite(to);
+            to->events |= POLLOUT;
             return;
         }
         buffer[read] = 0;
@@ -350,7 +340,7 @@ void Proxy::connectToIPv4Address(std::vector<pollfd>::iterator *clientIterator) 
     char response[] = {SOCKS_VERSION, SOCKS_SUCCESS, 0, IPv4_ADDRESS, 0, 0, 0, 0, 0, 0};
     auto target = socket(AF_INET, SOCK_STREAM, 0);
     if (target == -1) {
-        std::cerr << "INVALID IP ADDR OR PORT GET!" << std::endl;
+        std::cerr << "Invalid addr or port" << std::endl;
         response[1] = SOCKS_SERVER_ERROR;
         send(client->fd, response, sizeof(response), 0);
         passedHandshake.erase(client);
@@ -376,11 +366,10 @@ void Proxy::connectToIPv4Address(std::vector<pollfd>::iterator *clientIterator) 
     passedFullSOCKSprotocol.insert(&**clientIterator);
     (*transferMap)[client] = &**clientIterator;
     (*transferMap)[&**clientIterator] = client;
-
 }
 
 void Proxy::skipIPV6(std::vector<pollfd>::iterator *clientIterator) {
-    std::cerr << "SKIPPING IPV6" << std::endl;
+    std::cerr << "IPv6 skip" << std::endl;
     auto client = &**clientIterator;
     char response[] = {SOCKS_VERSION, SOCKS_SUCCESS, 0, IPv6_ADDRESS};
     response[1] = SOCKS_SERVER_ERROR;
@@ -400,7 +389,7 @@ void Proxy::resolveDomainName(std::vector<pollfd>::iterator *clientIterator) {
     char *domainName = new char[domainLength + 1];
     std::copy(buffer + 5, buffer + domainLength + 6, domainName);
     domainName[domainLength] = '\0';
-    std::cout << "DOMAIN NAME IS " << domainName << std::endl;
+    std::cerr << "Domain name: " << domainName << std::endl;
 
     hints->ai_family = AF_INET;
     hints->ai_socktype = SOCK_STREAM;
@@ -411,7 +400,7 @@ void Proxy::resolveDomainName(std::vector<pollfd>::iterator *clientIterator) {
     auto *resolver = new ResolverStructure;
     resolver->host = host;
     resolver->port = constructPort(buffer + SOCKS5_OFFSET_BEFORE_ADDR + 1 + domainLength);
-    std::cout << "PORT IS " << htons(resolver->port) << std::endl;
+    std::cerr << "Port: " << htons(resolver->port) << std::endl;
     resolver->waited = &**clientIterator;
     sig.sigev_notify = SIGEV_SIGNAL;
     sig.sigev_value.sival_ptr = resolver;
@@ -429,7 +418,7 @@ void Proxy::getResolveResult(std::vector<pollfd>::iterator *clientIterator) {
 
     s = read(resolverDescriptor->fd, &fdsi, sizeof(struct signalfd_siginfo));
     if (s < sizeof(struct signalfd_siginfo)) {
-        throw std::runtime_error("Something really bad was happened");
+        throw proxyException("read");
     }
 
     char response[] = {SOCKS_VERSION, SOCKS_SUCCESS, 0, IPv4_ADDRESS, 0, 0, 0, 0, 0, 0};
@@ -451,10 +440,10 @@ void Proxy::getResolveResult(std::vector<pollfd>::iterator *clientIterator) {
     targetAddr.sin_port = resolver->port;
     socklen_t addrSize = sizeof(targetAddr);
 
-    std::cout << "RESOLVING WAS SUCCESSFULL  " << inet_ntoa(targetAddr.sin_addr);
+    std::cerr << "Resolved: " << inet_ntoa(targetAddr.sin_addr);
     auto target = socket(AF_INET, SOCK_STREAM, 0);
     if (target == -1) {
-        std::cerr << "INVALID IP ADDR OR PORT GET!" << std::endl;
+        std::cerr << "Invalid addr or port" << std::endl;
         response[1] = SOCKS_SERVER_ERROR;
         send(client->fd, response, sizeof(response), 0);
         passedHandshake.erase(client);
@@ -500,7 +489,7 @@ void Proxy::getResolveResult(std::vector<pollfd>::iterator *clientIterator) {
     waitedCounter--;
 }
 
-void Proxy::setupDnsSignal() {
+void Proxy::setupDNSSignal() {
     sigset_t mask;
     sigemptyset(&mask);
     sigaddset(&mask, SIGRTMIN);
