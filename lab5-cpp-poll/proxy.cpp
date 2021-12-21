@@ -302,7 +302,6 @@ uint32_t Proxy::constructIPv4Addr(char *port) {
 }
 
 void Proxy::readData(std::vector<pollfd>::iterator *clientIterator) {
-
     auto client = &**clientIterator;
 
     if (!transferMap->count(client)) {
